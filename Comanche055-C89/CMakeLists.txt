@@ -1,11 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
-project(comanche055 C)
+cmake_minimum_required(VERSION 3.15)
 
-if(MSVC)
-    add_compile_options(/W4)
-else()
-    add_compile_options(-Wall)
-endif()
+project(comanche055 LANGUAGES C)
 
 add_executable(comanche055
     main.c
@@ -21,3 +16,15 @@ add_executable(comanche055
     navigation.c
     service.c
 )
+
+set_property(TARGET comanche055 PROPERTY C_STANDARD 90)
+set_property(TARGET comanche055 PROPERTY C_STANDARD_REQUIRED ON)
+set_property(TARGET comanche055 PROPERTY C_EXTENSIONS OFF)
+
+if(MSVC)
+    set_property(TARGET comanche055 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    target_compile_options(comanche055 PRIVATE /W4 /WX)
+else()
+    target_compile_options(comanche055 PRIVATE -pedantic-errors -Wall -Wextra -Werror)
+    target_link_options(comanche055 PRIVATE -static)
+endif()

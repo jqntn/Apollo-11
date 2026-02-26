@@ -37,13 +37,13 @@ cmake --build build
 ### MSVC
 
 ```
-cl /W4 /O2 /Fe:comanche055.exe *.c
+cl /W4 /WX /Za /MT /O2 /Fe:comanche055.exe *.c
 ```
 
 ### GCC / Clang
 
 ```
-cc -std=c89 -Wall -O3 -o comanche055 *.c
+cc -ansi -pedantic-errors -Wall -Wextra -Werror -static -O3 -o comanche055 *.c
 ```
 
 ## Usage
