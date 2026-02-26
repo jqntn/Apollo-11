@@ -1,6 +1,6 @@
 # Comanche055-C89
 
-ANSI C89 port of the Apollo 11 Command Module guidance computer flight software (Comanche 055 / Colossus 2A).
+ANSI C89 port of the Apollo 11 Guidance Computer (AGC), specifically the Command Module (Comanche 055 / Colossus 2A).
 
 Translated from the original AGC assembly source at [chrislgarry/Apollo-11](https://github.com/chrislgarry/Apollo-11).
 
