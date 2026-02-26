@@ -145,7 +145,10 @@ static const char *sign_str(int s)
 
 static const char *light_str(int on, const char *name)
 {
-    static char buf[12];
+    static char bufs[4][12];
+    static int idx = 0;
+    char *buf = bufs[idx & 3];
+    idx++;
     if (on) {
         int i, len;
         buf[0] = '[';
@@ -176,25 +179,25 @@ static void dsky_render(void)
     printf("|                                |\n");
 
     /* Status lights row 1 */
-    printf("| %s %s %s |\n",
+    printf("| %s %s %s  |\n",
            light_str(dsky_display.light_uplink_acty, "UPLINK"),
            light_str(dsky_display.light_temp, "TEMP"),
            light_str(dsky_display.light_prog_alarm, "PROG"));
 
     /* Status lights row 2 */
-    printf("| %s %s %s |\n",
+    printf("| %s %s %s  |\n",
            light_str(dsky_display.light_gimbal_lock, "GIMBAL"),
            light_str(dsky_display.light_stby, "STBY"),
            light_str(dsky_display.light_restart, "RSTART"));
 
     /* Status lights row 3 */
-    printf("| %s %s %s |\n",
+    printf("| %s %s %s  |\n",
            light_str(dsky_display.light_no_att, "NO ATT"),
            light_str(dsky_display.light_key_rel, "KEY RL"),
            light_str(dsky_display.light_tracker, "TRACKER"));
 
     /* Status lights row 4 */
-    printf("| %s %s %s |\n",
+    printf("| %s %s %s  |\n",
            light_str(dsky_display.light_opr_err, "OPR ER"),
            light_str(dsky_display.light_vel, "VEL"),
            light_str(dsky_display.light_alt, "ALT"));
@@ -202,7 +205,7 @@ static void dsky_render(void)
     printf("|                                |\n");
 
     /* COMP ACTY and PROG display */
-    printf("|  %s    PROG  %c%c          |\n",
+    printf("|  %s   PROG  %c%c          |\n",
            dsky_display.light_comp_acty ? "COMP ACTY" : "         ",
            digit_char(dsky_display.prog[0]),
            digit_char(dsky_display.prog[1]));
@@ -217,7 +220,7 @@ static void dsky_render(void)
     printf("|                                |\n");
 
     /* R1 */
-    printf("|  R1   %s%c%c%c%c%c                  |\n",
+    printf("|  R1   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r1_sign),
            digit_char(dsky_display.r1[0]),
            digit_char(dsky_display.r1[1]),
@@ -226,7 +229,7 @@ static void dsky_render(void)
            digit_char(dsky_display.r1[4]));
 
     /* R2 */
-    printf("|  R2   %s%c%c%c%c%c                  |\n",
+    printf("|  R2   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r2_sign),
            digit_char(dsky_display.r2[0]),
            digit_char(dsky_display.r2[1]),
@@ -235,7 +238,7 @@ static void dsky_render(void)
            digit_char(dsky_display.r2[4]));
 
     /* R3 */
-    printf("|  R3   %s%c%c%c%c%c                  |\n",
+    printf("|  R3   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r3_sign),
            digit_char(dsky_display.r3[0]),
            digit_char(dsky_display.r3[1]),
@@ -244,9 +247,9 @@ static void dsky_render(void)
            digit_char(dsky_display.r3[4]));
 
     printf("|                                |\n");
-    printf("| Keys: V=VERB N=NOUN  E=ENTR   |\n");
+    printf("| Keys: V=VERB N=NOUN E=ENTR     |\n");
     printf("| 0-9=digits +=PLUS -=MINUS      |\n");
-    printf("| C=CLR  P=PRO  K=KREL  R=RSET  |\n");
+    printf("| C=CLR  P=PRO  K=KREL  R=RSET   |\n");
     printf("| Q=QUIT                         |\n");
     printf("+--------------------------------+\n");
 
