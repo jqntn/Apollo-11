@@ -20,6 +20,21 @@
 #include <conio.h>
 #include <windows.h>
 
+static void win32_clear_screen(void)
+{
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD topLeft = {0, 0};
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD written, cells;
+
+    GetConsoleScreenBufferInfo(hOut, &csbi);
+    cells = csbi.dwSize.X * csbi.dwSize.Y;
+
+    FillConsoleOutputCharacterA(hOut, ' ', cells, topLeft, &written);
+    FillConsoleOutputAttribute(hOut, csbi.wAttributes, cells, topLeft, &written);
+    SetConsoleCursorPosition(hOut, topLeft);
+}
+
 int hal_kbhit(void) { return _kbhit(); }
 int hal_getch(void) { return _getch(); }
 void hal_term_init(void) { }
@@ -167,8 +182,12 @@ static void light_str(char *buf, int on, const char *name)
 
 static void dsky_render(void)
 {
-    /* Clear screen using ANSI escape (works on Windows 10+, Linux, macOS) */
+    /* Clear screen and home cursor */
+#ifdef _WIN32
+    win32_clear_screen();
+#else
     printf("\033[2J\033[H");
+#endif
 
     printf("+------------- DSKY -------------+\n");
     printf("|                                |\n");
