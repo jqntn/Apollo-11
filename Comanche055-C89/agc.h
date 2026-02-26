@@ -14,7 +14,8 @@ typedef short agc_word_t;
 /* Double precision: 32-bit signed, holds 30-bit DP values (two AGC words) */
 typedef int agc_dp_t;
 
-/* 64-bit integer for intermediate calculations (avoids 32-bit overflow) */
+/* 64-bit integer for intermediate calculations (avoids 32-bit overflow).
+ * long long is a C99/GNU extension; suppressed via -Wno-long-long. */
 typedef long long agc_int64_t;
 
 /* ----------------------------------------------------------------
