@@ -28,26 +28,26 @@ Source is in `Comanche055-C89/`.
 
 ### CMake
 
-```bash
+```
 cmake -B build
 cmake --build build
 ```
 
 ### MSVC (cl)
 
-```bash
+```
 cl /W4 /O2 /Fe:comanche055.exe *.c
 ```
 
 ### GCC / Clang
 
-```bash
+```
 cc -std=c89 -Wall -O3 -o comanche055 *.c
 ```
 
 ## Usage
 
-```bash
+```
 ./comanche055
 ```
 
