@@ -37,7 +37,7 @@ cmake --build build
 ### MSVC
 
 ```
-cl /W4 /WX /Za /MT /O2 /Fe:comanche055.exe *.c
+cl /W4 /WX /MT /O2 /Fe:comanche055.exe *.c
 ```
 
 ### GCC / Clang
