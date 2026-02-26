@@ -33,7 +33,7 @@ cmake -B build
 cmake --build build
 ```
 
-### MSVC (cl)
+### MSVC
 
 ```
 cl /W4 /O2 /Fe:comanche055.exe *.c
