@@ -7,6 +7,7 @@ Translated from the original AGC assembly source at [chrislgarry/Apollo-11](http
 ## Overview
 
 Self-contained, single-threaded console application with no external dependencies or libraries.
+
 Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, waitlist timer system, and DSKY verb/noun interface rendered as ASCII in the terminal.
 
 **Implemented:**
