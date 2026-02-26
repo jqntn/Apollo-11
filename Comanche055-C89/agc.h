@@ -14,11 +14,14 @@ typedef short agc_word_t;
 /* Double precision: 32-bit signed, holds 30-bit DP values (two AGC words) */
 typedef int agc_dp_t;
 
+/* 64-bit integer for intermediate calculations (avoids 32-bit overflow) */
+typedef long long agc_int64_t;
+
 /* ----------------------------------------------------------------
  * AGC 1's complement constants
  * ---------------------------------------------------------------- */
 
-#define AGC_POSMAX   ((agc_word_t)016377)  /* 07777 octal = 16383 decimal */
+#define AGC_POSMAX   ((agc_word_t)16383)   /* 037777 octal = 16383 decimal */
 #define AGC_NEGMAX   ((agc_word_t)-16383)
 #define AGC_POS_ZERO ((agc_word_t)0)
 #define AGC_NEG_ZERO ((agc_word_t)(-0x7FFF)) /* -0 in 1's complement: all 1s */

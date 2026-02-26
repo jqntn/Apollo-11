@@ -24,7 +24,7 @@ void alarm_set(int code)
     agc_alarm_code = code;
     agc_prog_alarm = 1;
     /* Light PROG alarm on DSKY via channel 11 */
-    agc_channels[CHAN_DSALMOUT] |= BIT8;
+    agc_channels[CHAN_DSALMOUT] |= BIT11;
 }
 
 /* ----------------------------------------------------------------

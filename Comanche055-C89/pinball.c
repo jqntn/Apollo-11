@@ -579,7 +579,7 @@ void pinball_keypress(int keycode)
     }
 
     /* Digit keys (0-9) */
-    if (keycode >= 0 && keycode <= 011) {
+    if ((keycode >= 0 && keycode <= 011) || keycode == DSKY_KEY_0) {
         int digit;
         /* Convert AGC key code to digit value */
         if (keycode == DSKY_KEY_0) {

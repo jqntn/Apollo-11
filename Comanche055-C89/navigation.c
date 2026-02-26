@@ -122,7 +122,8 @@ void nav_compute_orbit(const agc_state_vector_t *sv,
     long r_mag, v_sq, r_mag_sq;
     long mu, two_mu;
     long energy_num, a_km;
-    long h_sq, e_num, e_den;
+    agc_int64_t h_sq;
+    long e_num, e_den;
     long apo, peri;
 
     /* Extract position (km, integer) and velocity (km/s * 100 for precision) */
@@ -163,23 +164,23 @@ void nav_compute_orbit(const agc_state_vector_t *sv,
         return;
     }
 
-    a_km = (mu * r_mag) / energy_num;
+    a_km = (long)(((agc_int64_t)mu * r_mag) / energy_num);
 
     /* Specific angular momentum: h = r x v */
     /* |h|^2 = (ry*vz - rz*vy)^2 + (rz*vx - rx*vz)^2 + (rx*vy - ry*vx)^2 */
     {
-        long hx = ry*vz - rz*vy;
-        long hy = rz*vx - rx*vz;
-        long hz = rx*vy - ry*vx;
+        agc_int64_t hx = (agc_int64_t)ry*vz - (agc_int64_t)rz*vy;
+        agc_int64_t hy = (agc_int64_t)rz*vx - (agc_int64_t)rx*vz;
+        agc_int64_t hz = (agc_int64_t)rx*vy - (agc_int64_t)ry*vx;
         h_sq = hx*hx + hy*hy + hz*hz;
     }
 
     /* Eccentricity: e^2 = 1 - h^2 / (mu * a)
      * => e^2 = 1 - h^2 / (mu * a)
      * => e = sqrt(1 - p/a) where p = h^2/mu */
-    e_den = mu * a_km;
+    e_den = (long)((agc_int64_t)mu * a_km);
     if (e_den == 0) e_den = 1;
-    e_num = e_den - h_sq / (mu > 0 ? mu : 1);
+    e_num = (long)((agc_int64_t)e_den - h_sq / (mu > 0 ? mu : 1));
 
     /* Apogee = a * (1 + e) - R_earth, Perigee = a * (1 - e) - R_earth */
     /* Since e^2 = e_num / e_den: */
@@ -188,7 +189,7 @@ void nav_compute_orbit(const agc_state_vector_t *sv,
     {
         long ae_sq, ae;
         if (e_num < 0) e_num = 0;  /* Circular orbit */
-        ae_sq = (a_km * a_km * e_num) / e_den;
+        ae_sq = (long)(((agc_int64_t)a_km * a_km / e_den) * e_num);
         ae = isqrt_long(ae_sq > 0 ? ae_sq : 0);
 
         apo  = a_km + ae - EARTH_RADIUS_KM;
@@ -207,7 +208,7 @@ void nav_compute_orbit(const agc_state_vector_t *sv,
     {
         /* a^3/mu: if a=6556, a^3=2.816e11, mu=3.986e5, ratio=7.066e5
          * sqrt(7.066e5) = 840.6, * 2pi = 5283 sec = 88 min */
-        long a3_over_mu = (a_km * a_km / mu) * a_km;
+        long a3_over_mu = (long)(((agc_int64_t)a_km * a_km / mu) * a_km);
         long sqrt_val = isqrt_long(a3_over_mu > 0 ? a3_over_mu : 0);
         *period_sec = 6 * sqrt_val + sqrt_val / 4;  /* ~6.2832 * sqrt */
     }

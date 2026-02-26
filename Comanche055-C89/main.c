@@ -45,7 +45,6 @@ int main(void)
     timer_init();
     dsky_init();
     pinball_init();
-    nav_init();
 
     /* Perform fresh start (DOFSTART) */
     fresh_start();

@@ -135,24 +135,23 @@ agc_dp_t agc_dp_multiply(agc_dp_t a, agc_dp_t b)
     /* DP multiply: (a * b) >> 14
      * Both operands scaled at 1 in 28-bit fraction
      * Use 64-bit intermediate to avoid overflow */
-    long al = (long)a;
-    long bl = (long)b;
-    long product = (al * bl) >> 14;
+    agc_int64_t product = (agc_int64_t)a * (agc_int64_t)b;
+    product >>= 14;
     /* Clamp to 30-bit range */
-    if (product > 0x1FFFFFFFL) product = 0x1FFFFFFFL;
-    if (product < -0x1FFFFFFFL) product = -0x1FFFFFFFL;
+    if (product > 0x1FFFFFFF) product = 0x1FFFFFFF;
+    if (product < -0x1FFFFFFF) product = -0x1FFFFFFF;
     return (agc_dp_t)product;
 }
 
 agc_dp_t agc_dp_divide(agc_dp_t a, agc_dp_t b)
 {
     /* DP divide: (a << 14) / b */
-    long al, result;
+    agc_int64_t al, result;
     if (b == 0) return (a >= 0) ? 0x1FFFFFFF : -0x1FFFFFFF;
-    al = (long)a << 14;
-    result = al / (long)b;
-    if (result > 0x1FFFFFFFL) result = 0x1FFFFFFFL;
-    if (result < -0x1FFFFFFFL) result = -0x1FFFFFFFL;
+    al = (agc_int64_t)a << 14;
+    result = al / (agc_int64_t)b;
+    if (result > 0x1FFFFFFF) result = 0x1FFFFFFF;
+    if (result < -0x1FFFFFFF) result = -0x1FFFFFFF;
     return (agc_dp_t)result;
 }
 
@@ -190,11 +189,11 @@ agc_dp_t agc_dp_sqrt(agc_dp_t val)
     for (i = 0; i < 20; i++) {
         /* x_new = (x + val/x) / 2
          * In fixed point: x_new = (x + (val << 14) / x) / 2 */
-        long div_result;
+        agc_int64_t div_result;
         if (x == 0) break;
-        div_result = ((long)val << 14) / (long)x;
+        div_result = ((agc_int64_t)val << 14) / (agc_int64_t)x;
         prev = x;
-        x = (agc_dp_t)((long)x + div_result) >> 1;
+        x = (agc_dp_t)(((agc_int64_t)x + div_result) >> 1);
         if (x == prev) break;
     }
     return x;

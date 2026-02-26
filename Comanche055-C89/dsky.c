@@ -143,12 +143,8 @@ static const char *sign_str(int s)
     return " ";
 }
 
-static const char *light_str(int on, const char *name)
+static void light_str(char *buf, int on, const char *name)
 {
-    static char bufs[4][12];
-    static int idx = 0;
-    char *buf = bufs[idx & 3];
-    idx++;
     if (on) {
         int i, len;
         buf[0] = '[';
@@ -163,7 +159,6 @@ static const char *light_str(int on, const char *name)
     } else {
         memcpy(buf, "         ", 10);
     }
-    return buf;
 }
 
 /* ----------------------------------------------------------------
@@ -179,28 +174,40 @@ static void dsky_render(void)
     printf("|                                |\n");
 
     /* Status lights row 1 */
-    printf("| %s %s %s  |\n",
-           light_str(dsky_display.light_uplink_acty, "UPLINK"),
-           light_str(dsky_display.light_temp, "TEMP"),
-           light_str(dsky_display.light_prog_alarm, "PROG"));
+    {
+        char a[12], b[12], c[12];
+        light_str(a, dsky_display.light_uplink_acty, "UPLINK");
+        light_str(b, dsky_display.light_temp, "TEMP");
+        light_str(c, dsky_display.light_prog_alarm, "PROG");
+        printf("| %s %s %s  |\n", a, b, c);
+    }
 
     /* Status lights row 2 */
-    printf("| %s %s %s  |\n",
-           light_str(dsky_display.light_gimbal_lock, "GIMBAL"),
-           light_str(dsky_display.light_stby, "STBY"),
-           light_str(dsky_display.light_restart, "RSTART"));
+    {
+        char a[12], b[12], c[12];
+        light_str(a, dsky_display.light_gimbal_lock, "GIMBAL");
+        light_str(b, dsky_display.light_stby, "STBY");
+        light_str(c, dsky_display.light_restart, "RSTART");
+        printf("| %s %s %s  |\n", a, b, c);
+    }
 
     /* Status lights row 3 */
-    printf("| %s %s %s  |\n",
-           light_str(dsky_display.light_no_att, "NO ATT"),
-           light_str(dsky_display.light_key_rel, "KEY RL"),
-           light_str(dsky_display.light_tracker, "TRACKER"));
+    {
+        char a[12], b[12], c[12];
+        light_str(a, dsky_display.light_no_att, "NO ATT");
+        light_str(b, dsky_display.light_key_rel, "KEY RL");
+        light_str(c, dsky_display.light_tracker, "TRACKER");
+        printf("| %s %s %s  |\n", a, b, c);
+    }
 
     /* Status lights row 4 */
-    printf("| %s %s %s  |\n",
-           light_str(dsky_display.light_opr_err, "OPR ER"),
-           light_str(dsky_display.light_vel, "VEL"),
-           light_str(dsky_display.light_alt, "ALT"));
+    {
+        char a[12], b[12], c[12];
+        light_str(a, dsky_display.light_opr_err, "OPR ER");
+        light_str(b, dsky_display.light_vel, "VEL");
+        light_str(c, dsky_display.light_alt, "ALT");
+        printf("| %s %s %s  |\n", a, b, c);
+    }
 
     printf("|                                |\n");
 

@@ -20,17 +20,8 @@
  * Defines display characteristics for each supported noun.
  */
 
-static const noun_table_entry_t noun_table_data[] = {
-    /* noun, components, signed, scale_factor */
-    {  1, 3, 0,  0 },  /* Specified machine address */
-    {  9, 3, 0,  0 },  /* Alarm codes */
-    { 36, 3, 1,  0 },  /* Mission elapsed time (H, M, S) */
-    { 43, 3, 1,  0 },  /* Latitude, longitude, altitude */
-    { 44, 3, 1,  0 },  /* Apogee, perigee, TFF */
-    { 65, 3, 1,  0 },  /* Sampled AGC time (H, M, S) */
-};
-
 const noun_table_entry_t noun_table[] = {
+    /* noun, components, signed, scale_factor */
     {  1, 3, 0,  0 },
     {  9, 3, 0,  0 },
     { 36, 3, 1,  0 },
