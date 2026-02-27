@@ -34,18 +34,6 @@ Source is in `Comanche055-C89/`.
 > cmake --build build
 ```
 
-### MSVC
-
-```cmd
-> cl /W4 /WX /MT /O2 /Fe:comanche055.exe *.c
-```
-
-### GCC / Clang
-
-```cmd
-> cc -ansi -pedantic-errors -Wall -Wextra -Werror -Wno-long-long -static -O3 -o comanche055 *.c
-```
-
 ## Usage
 
 ```cmd
