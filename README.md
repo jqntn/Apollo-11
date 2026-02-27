@@ -18,9 +18,9 @@ Frontend availability by platform:
 
 | Frontend | Windows | Linux | macOS |
 |---|---|---|---|
-| Console (ANSI terminal) | Yes | Yes | Yes |
+| Console | Yes | Yes | Yes |
 | Graphical (Win32 GDI) | Yes | No | No |
-| Web (HTTP/SSE localhost:8080) | Yes | No | No |
+| Web UI | Yes | No | No |
 
 **Implemented:**
 
