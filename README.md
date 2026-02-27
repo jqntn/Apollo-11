@@ -57,6 +57,13 @@ Keyboard mapping is shown on the DSKY display:
 
 Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
 
+On Windows, startup also offers:
+
+- `Graphical (Win32 GDI)`
+- `Web (HTTP/SSE localhost:8080)`
+
+When `Web` is selected, open `http://127.0.0.1:8080/` in a browser.
+
 ## Screenshots
 
 <table>

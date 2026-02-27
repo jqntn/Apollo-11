@@ -82,6 +82,9 @@ void dsky_update(void);
 /* Poll for keyboard input (called from main loop) */
 void dsky_poll_input(void);
 
+/* Submit a DSKY keycode to Pinball (shared by all backends) */
+void dsky_submit_key(int keycode);
+
 /* T4RUPT handler: scan DSKY display buffer */
 void dsky_t4rupt(void);
 

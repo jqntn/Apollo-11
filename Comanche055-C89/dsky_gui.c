@@ -240,12 +240,7 @@ static int hit_btn(int mx, int my)
 
 static void send_key(int kc)
 {
-    if(kc==DSKY_KEY_PRO){
-        pinball_keypress(-1);
-    } else if(kc>=0){
-        agc_channels[CHAN_MNKEYIN]=(agc_word_t)kc;
-        pinball_keypress(kc);
-    }
+    dsky_submit_key(kc);
 }
 
 static int map_char(int ch)
@@ -303,7 +298,7 @@ static LRESULT CALLBACK wndproc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
         int ch = (int)wp;
         int kc;
         if(ch=='q'||ch=='Q'){ exit(0); }
-        if(ch=='p'||ch=='P'){ pinball_keypress(-1); return 0; }
+        if(ch=='p'||ch=='P'){ dsky_submit_key(DSKY_KEY_PRO); return 0; }
         kc = map_char(ch);
         if(kc>=0) send_key(kc);
         return 0;

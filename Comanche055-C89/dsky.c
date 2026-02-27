@@ -339,6 +339,25 @@ void dsky_set_comp_acty(int on)
 }
 
 /* ----------------------------------------------------------------
+ * Shared key submission helper
+ * ----------------------------------------------------------------
+ */
+
+void dsky_submit_key(int keycode)
+{
+    if (keycode == DSKY_KEY_PRO) {
+        pinball_keypress(-1);
+        return;
+    }
+
+    if (keycode >= 0) {
+        /* Write key code to channel 15 and raise KEYRUPT */
+        agc_channels[CHAN_MNKEYIN] = (agc_word_t)keycode;
+        pinball_keypress(keycode);
+    }
+}
+
+/* ----------------------------------------------------------------
  * Poll keyboard input
  * ----------------------------------------------------------------
  * Maps console keys to AGC DSKY key codes and forwards to Pinball.
@@ -350,7 +369,7 @@ void dsky_poll_input(void)
     if (!hal_kbhit()) return;
 
     ch = hal_getch();
-    keycode = -1;
+    keycode = -2;
 
     switch (ch) {
         case '0': keycode = DSKY_KEY_0; break;
@@ -382,13 +401,8 @@ void dsky_poll_input(void)
             break;
     }
 
-    if (keycode >= 0) {
-        /* Write key code to channel 15 and raise KEYRUPT */
-        agc_channels[CHAN_MNKEYIN] = (agc_word_t)keycode;
-        pinball_keypress(keycode);
-    } else if (ch == 'p' || ch == 'P') {
-        /* PRO key: handled specially (proceed) */
-        pinball_keypress(-1);
+    if (keycode != -2) {
+        dsky_submit_key(keycode);
     }
 }
 

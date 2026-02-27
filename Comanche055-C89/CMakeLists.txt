@@ -10,6 +10,7 @@ add_executable(comanche055
     waitlist.c
     dsky.c
     dsky_gui.c
+    dsky_web.c
     pinball.c
     alarm.c
     timer.c
@@ -19,7 +20,7 @@ add_executable(comanche055
 )
 
 if(WIN32)
-    target_link_libraries(comanche055 PRIVATE user32 gdi32)
+    target_link_libraries(comanche055 PRIVATE user32 gdi32 ws2_32)
 endif()
 
 set_property(TARGET comanche055 PROPERTY C_STANDARD 90)

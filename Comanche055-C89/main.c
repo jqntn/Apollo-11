@@ -27,6 +27,7 @@
 #include "navigation.h"
 #ifdef _WIN32
 #include "dsky_gui.h"
+#include "dsky_web.h"
 #endif
 
 int main(void)
@@ -45,6 +46,7 @@ int main(void)
 #ifdef _WIN32
     printf("  [1] Console  (ANSI terminal)\n");
     printf("  [2] Graphical (Win32 GDI)\n");
+    printf("  [3] Web (HTTP/SSE localhost:8080)\n");
 #else
     printf("  [1] Console  (ANSI terminal)\n");
 #endif
@@ -55,6 +57,8 @@ int main(void)
 #ifdef _WIN32
     if (choice == '2') {
         backend = &dsky_gui_backend;
+    } else if (choice == '3') {
+        backend = &dsky_web_backend;
     } else {
         backend = &dsky_console_backend;
     }
