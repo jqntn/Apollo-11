@@ -402,9 +402,11 @@ static void gui_init(void)
         (GetSystemMetrics(SM_CYSCREEN)-wh)/2, ww, wh,
         NULL,NULL,hi,NULL);
 
-    ShowWindow(g_hwnd, SW_SHOW);
+    ShowWindow(g_hwnd, SW_SHOWNORMAL);
     UpdateWindow(g_hwnd);
+    BringWindowToTop(g_hwnd);
     SetForegroundWindow(g_hwnd);
+    SetActiveWindow(g_hwnd);
     SetFocus(g_hwnd);
     g_running = 1;
     g_dirty = 1;
