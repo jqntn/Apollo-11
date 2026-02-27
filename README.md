@@ -71,7 +71,7 @@ Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
 
 ## Roadmap
 
-- [ ] Graphical DSKY interface
+- [x] Graphical DSKY interface
 - [ ] Full program implementations (P20–P25, P30–P39, P40–P47, P51–P53, P61–P67)
 - [ ] State vector propagation and orbit integration
 - [ ] IMU simulation
