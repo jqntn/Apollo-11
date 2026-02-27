@@ -14,9 +14,9 @@ Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, w
 
 Primary development and support targets are **Windows** and **Linux**.
 
-Backend availability by platform:
+Frontend availability by platform:
 
-| Backend | Windows | Linux | macOS |
+| Frontend | Windows | Linux | macOS |
 |---|---|---|---|
 | Console (ANSI terminal) | Yes | Yes | Yes |
 | Graphical (Win32 GDI) | Yes | No | No |
