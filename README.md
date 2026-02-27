@@ -14,9 +14,7 @@ Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, w
 
 Primary development and support targets are **Windows** and **Linux**.
 
-**macOS** is not a primary target.
-
-Backend availability and startup selector visibility by platform:
+Backend availability by platform:
 
 | Backend | Windows | Linux | macOS |
 |---|---|---|---|
@@ -70,13 +68,6 @@ Keyboard mapping is shown on the DSKY display:
 | `Q` | Quit |
 
 Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
-
-Startup selection behavior:
-
-- On **Windows**: `Console`, `Graphical (Win32 GDI)`, `Web (HTTP/SSE localhost:8080)`.
-- On **Linux/macOS**: `Console` only.
-
-When `Web` is selected, open `http://127.0.0.1:8080/` in a browser.
 
 ## Screenshots
 
