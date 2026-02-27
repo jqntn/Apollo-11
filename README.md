@@ -57,6 +57,21 @@ Keyboard mapping is shown on the DSKY display:
 
 Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td style="text-align: center; padding: 20px; vertical-align: top;">
+      <img src="assets/ui-ascii.png" alt="ASCII UI" style="height: 300px; object-fit: contain;">
+      <br><br><strong>ASCII Terminal Interface</strong>
+    </td>
+    <td style="text-align: center; padding: 20px; vertical-align: top;">
+      <img src="assets/ui-win32-gdi.png" alt="Win32 GDI UI" style="height: 300px; object-fit: contain;">
+      <br><br><strong>Win32 GDI Interface</strong>
+    </td>
+  </tr>
+</table>
+
 ## Roadmap
 
 - [x] Graphical DSKY interface
