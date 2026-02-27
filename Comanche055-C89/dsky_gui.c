@@ -27,13 +27,14 @@ extern void pinball_keypress(int keycode);
 #define COL_LIGHT_OFF   RGB(30,25,0)
 #define COL_LABEL       RGB(200,200,200)
 #define COL_BTN_FACE    RGB(80,80,80)
+#define COL_BTN_DOWN    RGB(55,55,55)
 #define COL_BTN_TEXT    RGB(220,220,220)
 #define COL_SEP         RGB(60,60,60)
 
-#define SEG_W  22
-#define SEG_H  38
-#define SEG_T  4
-#define DIG_SP 28
+#define SEG_W  16
+#define SEG_H  28
+#define SEG_T  3
+#define DIG_SP 22
 
 #define SA 0x01
 #define SB 0x02
@@ -80,6 +81,7 @@ static int g_running = 0;
 static dsky_display_t g_prev;
 static int g_dirty = 1;
 static HFONT g_fnt_light, g_fnt_label, g_fnt_btn;
+static int g_pressed_btn = -1;
 
 static void frect(HDC dc, int x, int y, int w, int h, COLORREF c)
 {
@@ -137,14 +139,14 @@ static void draw_label(HDC dc, int x, int y, const char *txt)
     SelectObject(dc, old);
 }
 
-static void draw_btn(HDC dc, const gbtn_t *b)
+static void draw_btn(HDC dc, const gbtn_t *b, int pressed)
 {
     RECT r; HFONT old; HBRUSH br;
     r.left=b->x; r.top=b->y; r.right=b->x+b->w; r.bottom=b->y+b->h;
-    br = CreateSolidBrush(COL_BTN_FACE);
+    br = CreateSolidBrush(pressed ? COL_BTN_DOWN : COL_BTN_FACE);
     FillRect(dc, &r, br);
     DeleteObject(br);
-    DrawEdge(dc, &r, EDGE_RAISED, BF_RECT);
+    DrawEdge(dc, &r, pressed ? EDGE_SUNKEN : EDGE_RAISED, BF_RECT);
     old = (HFONT)SelectObject(dc, g_fnt_btn);
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, COL_BTN_TEXT);
@@ -179,45 +181,45 @@ static void paint_dc(HDC dc)
 
     /* PROG */
     draw_label(dc, 220,158, "PROG");
-    draw_seg(dc, 270,155, dsky_display.prog[0]);
-    draw_seg(dc, 270+DIG_SP,155, dsky_display.prog[1]);
+    draw_seg(dc, 280,158, dsky_display.prog[0]);
+    draw_seg(dc, 280+DIG_SP,158, dsky_display.prog[1]);
 
-    frect(dc, 20,185, 358,2, COL_SEP);
+    frect(dc, 20,192, 358,2, COL_SEP);
 
     /* VERB */
-    draw_label(dc, 25,196, "VERB");
-    draw_seg(dc, 80,193, dsky_display.verb[0]);
-    draw_seg(dc, 80+DIG_SP,193, dsky_display.verb[1]);
+    draw_label(dc, 25,200, "VERB");
+    draw_seg(dc, 80,200, dsky_display.verb[0]);
+    draw_seg(dc, 80+DIG_SP,200, dsky_display.verb[1]);
 
     /* NOUN */
-    draw_label(dc, 220,196, "NOUN");
-    draw_seg(dc, 275,193, dsky_display.noun[0]);
-    draw_seg(dc, 275+DIG_SP,193, dsky_display.noun[1]);
+    draw_label(dc, 220,200, "NOUN");
+    draw_seg(dc, 280,200, dsky_display.noun[0]);
+    draw_seg(dc, 280+DIG_SP,200, dsky_display.noun[1]);
 
-    frect(dc, 20,238, 358,2, COL_SEP);
+    frect(dc, 20,234, 358,2, COL_SEP);
 
     /* R1 */
     draw_label(dc, 25,252, "R1");
-    dx=70; dy=248;
+    dx=70; dy=252;
     draw_sign(dc, dx, dy, dsky_display.r1_sign);
     for(i=0;i<5;i++) draw_seg(dc, dx+DIG_SP+i*DIG_SP, dy, dsky_display.r1[i]);
 
     /* R2 */
     draw_label(dc, 25,298, "R2");
-    dx=70; dy=294;
+    dx=70; dy=298;
     draw_sign(dc, dx, dy, dsky_display.r2_sign);
     for(i=0;i<5;i++) draw_seg(dc, dx+DIG_SP+i*DIG_SP, dy, dsky_display.r2[i]);
 
     /* R3 */
     draw_label(dc, 25,344, "R3");
-    dx=70; dy=340;
+    dx=70; dy=344;
     draw_sign(dc, dx, dy, dsky_display.r3_sign);
     for(i=0;i<5;i++) draw_seg(dc, dx+DIG_SP+i*DIG_SP, dy, dsky_display.r3[i]);
 
     frect(dc, 15,420, 368,2, COL_SEP);
 
     /* Keypad */
-    for(i=0;i<NBTN;i++) draw_btn(dc, &btns[i]);
+    for(i=0;i<NBTN;i++) draw_btn(dc, &btns[i], i==g_pressed_btn);
 }
 
 static int hit_btn(int mx, int my)
@@ -304,9 +306,19 @@ static LRESULT CALLBACK wndproc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
     case WM_LBUTTONDOWN:
     {
         int idx = hit_btn(LOWORD(lp), HIWORD(lp));
-        if(idx>=0) send_key(btns[idx].kc);
+        if(idx>=0){
+            g_pressed_btn = idx;
+            InvalidateRect(hw, NULL, FALSE);
+            send_key(btns[idx].kc);
+        }
         return 0;
     }
+    case WM_LBUTTONUP:
+        if(g_pressed_btn>=0){
+            g_pressed_btn = -1;
+            InvalidateRect(hw, NULL, FALSE);
+        }
+        return 0;
     case WM_CLOSE:
         exit(0);
     case WM_DESTROY:
