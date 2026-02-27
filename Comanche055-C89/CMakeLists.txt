@@ -9,6 +9,7 @@ add_executable(comanche055
     executive.c
     waitlist.c
     dsky.c
+    dsky_gui.c
     pinball.c
     alarm.c
     timer.c
@@ -16,6 +17,10 @@ add_executable(comanche055
     navigation.c
     service.c
 )
+
+if(WIN32)
+    target_link_libraries(comanche055 PRIVATE user32 gdi32)
+endif()
 
 set_property(TARGET comanche055 PROPERTY C_STANDARD 90)
 set_property(TARGET comanche055 PROPERTY C_STANDARD_REQUIRED ON)

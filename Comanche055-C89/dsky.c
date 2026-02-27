@@ -391,3 +391,18 @@ void dsky_poll_input(void)
         pinball_keypress(-1);
     }
 }
+
+/* ----------------------------------------------------------------
+ * Console backend struct
+ * ---------------------------------------------------------------- */
+
+static void console_be_init(void)    { hal_term_init(); }
+static void console_be_cleanup(void) { hal_term_cleanup(); }
+
+dsky_backend_t dsky_console_backend = {
+    console_be_init,
+    dsky_update,
+    dsky_poll_input,
+    console_be_cleanup,
+    hal_sleep_ms
+};

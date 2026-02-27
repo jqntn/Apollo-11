@@ -7,8 +7,8 @@
  * Colossus 2A / Comanche 055
  *
  * This is a faithful C89 port of the AGC flight software.
- * The DSKY is rendered as ASCII art in the console.
- * Type verb/noun commands using the keyboard mapping shown on screen.
+ * Supports both an ANSI console backend and a Win32 graphical backend.
+ * The user selects the display mode at startup.
  */
 
 #include <stdio.h>
@@ -25,18 +25,45 @@
 #include "service.h"
 #include "programs.h"
 #include "navigation.h"
+#ifdef _WIN32
+#include "dsky_gui.h"
+#endif
 
 int main(void)
 {
+    dsky_backend_t *backend;
+    int choice;
+
     printf("===========================================\n");
     printf("  COMANCHE 055 -- Colossus 2A\n");
     printf("  Apollo 11 CM Guidance Computer\n");
     printf("  ANSI C89 Port\n");
     printf("===========================================\n");
-    printf("\nInitializing AGC...\n");
 
-    /* Initialize platform terminal (raw mode on Linux/macOS) */
-    hal_term_init();
+    /* Select display backend */
+    printf("\nSelect display mode:\n");
+#ifdef _WIN32
+    printf("  [1] Console  (ANSI terminal)\n");
+    printf("  [2] Graphical (Win32 GDI)\n");
+#else
+    printf("  [1] Console  (ANSI terminal)\n");
+#endif
+    printf("> ");
+    fflush(stdout);
+    choice = getchar();
+
+#ifdef _WIN32
+    if (choice == '2') {
+        backend = &dsky_gui_backend;
+    } else {
+        backend = &dsky_console_backend;
+    }
+#else
+    backend = &dsky_console_backend;
+    (void)choice;
+#endif
+
+    printf("\nInitializing AGC...\n");
 
     /* Initialize all subsystems */
     agc_init();
@@ -52,9 +79,15 @@ int main(void)
     /* Initialize navigation state */
     nav_init();
 
-    printf("AGC ready. Entering P00 (CMC Idling).\n");
-    printf("Press any key to start...\n");
-    hal_getch();
+    /* Initialize display backend */
+    backend->init();
+
+    /* Console mode: wait for keypress before entering main loop */
+    if (backend == &dsky_console_backend) {
+        printf("AGC ready. Entering P00 (CMC Idling).\n");
+        printf("Press any key to start...\n");
+        hal_getch();
+    }
 
     /* Force initial display */
     pinball_show_prog(0);
@@ -69,17 +102,17 @@ int main(void)
         /* Run highest priority job (one quantum) */
         exec_run();
 
-        /* Refresh console DSKY display */
-        dsky_update();
+        /* Refresh DSKY display */
+        backend->update();
 
-        /* Check for keyboard input */
-        dsky_poll_input();
+        /* Check for input */
+        backend->poll_input();
 
         /* Sleep 10ms (~100 Hz cycle) */
-        hal_sleep_ms(10);
+        backend->sleep_ms(10);
     }
 
     /* Not reached, but for completeness */
-    hal_term_cleanup();
+    backend->cleanup();
     return 0;
 }

@@ -9,6 +9,7 @@
 #define DSKY_H
 
 #include "agc.h"
+#include "dsky_backend.h"
 
 /* ----------------------------------------------------------------
  * DSKY display state
@@ -103,5 +104,8 @@ void hal_term_cleanup(void);
 
 /* Sleep for milliseconds */
 void hal_sleep_ms(int ms);
+
+/* Console backend (ANSI terminal) */
+extern dsky_backend_t dsky_console_backend;
 
 #endif /* DSKY_H */
