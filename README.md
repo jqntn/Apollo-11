@@ -14,15 +14,15 @@ Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, w
 
 Primary development and support targets are **Windows** and **Linux**.
 
-**macOS** is a best-effort platform and mostly works, especially in console mode, but it is not a primary target.
+**macOS** is not a primary target.
 
 Backend availability and startup selector visibility by platform:
 
-| Backend | Windows | Linux | macOS | Notes |
-|---|---|---|---|---|
-| Console (ANSI terminal) | Yes | Yes | Yes (mostly) | Available in startup selector on all platforms. |
-| Graphical (Win32 GDI) | Yes | No | No | Windows-only backend. |
-| Web (HTTP/SSE localhost:8080) | Yes | No (not offered at startup) | No (not offered at startup) | Current implementation is Windows-first; non-Windows path is stubbed. |
+| Backend | Windows | Linux | macOS |
+|---|---|---|---|
+| Console (ANSI terminal) | Yes | Yes | Yes |
+| Graphical (Win32 GDI) | Yes | No | No |
+| Web (HTTP/SSE localhost:8080) | Yes | No | No |
 
 **Implemented:**
 
