@@ -144,7 +144,7 @@ static dsky_backend_t *select_backend_interactive(void)
     options[0].backend = &dsky_console_backend;
     options[1].label = "Graphical (Win32 GDI)";
     options[1].backend = &dsky_gui_backend;
-    options[2].label = "Web       (HTTP/SSE localhost:8080)";
+    options[2].label = "Web       (HTTP/SSE)";
     options[2].backend = &dsky_web_backend;
     count = 3;
 #else
