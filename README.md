@@ -29,27 +29,27 @@ Source is in `Comanche055-C89/`.
 
 ### CMake
 
-```
-cmake -B build
-cmake --build build
+```cmd
+> cmake -B build
+> cmake --build build
 ```
 
 ### MSVC
 
-```
-cl /W4 /WX /MT /O2 /Fe:comanche055.exe *.c
+```cmd
+> cl /W4 /WX /MT /O2 /Fe:comanche055.exe *.c
 ```
 
 ### GCC / Clang
 
-```
-cc -ansi -pedantic-errors -Wall -Wextra -Werror -Wno-long-long -static -O3 -o comanche055 *.c
+```cmd
+> cc -ansi -pedantic-errors -Wall -Wextra -Werror -Wno-long-long -static -O3 -o comanche055 *.c
 ```
 
 ## Usage
 
-```
-./comanche055
+```cmd
+> ./comanche055
 ```
 
 Keyboard mapping is shown on the DSKY display:
