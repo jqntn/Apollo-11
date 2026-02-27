@@ -10,6 +10,20 @@ Self-contained, single-threaded console application with no external dependencie
 
 Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, waitlist timer system, and DSKY verb/noun interface rendered as ASCII in the terminal.
 
+## Platform Support
+
+Primary development and support targets are **Windows** and **Linux**.
+
+**macOS** is a best-effort platform and mostly works, especially in console mode, but it is not a primary target.
+
+Backend availability and startup selector visibility by platform:
+
+| Backend | Windows | Linux | macOS | Notes |
+|---|---|---|---|---|
+| Console (ANSI terminal) | Yes | Yes | Yes (mostly) | Available in startup selector on all platforms. |
+| Graphical (Win32 GDI) | Yes | No | No | Windows-only backend. |
+| Web (HTTP/SSE localhost:8080) | Yes | No (not offered at startup) | No (not offered at startup) | Current implementation is Windows-first; non-Windows path is stubbed. |
+
 **Implemented:**
 
 - **P00** — CMC Idling
@@ -57,10 +71,10 @@ Keyboard mapping is shown on the DSKY display:
 
 Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
 
-On Windows, startup also offers:
+Startup selection behavior:
 
-- `Graphical (Win32 GDI)`
-- `Web (HTTP/SSE localhost:8080)`
+- On **Windows**: `Console`, `Graphical (Win32 GDI)`, `Web (HTTP/SSE localhost:8080)`.
+- On **Linux/macOS**: `Console` only.
 
 When `Web` is selected, open `http://127.0.0.1:8080/` in a browser.
 
