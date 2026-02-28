@@ -17,6 +17,9 @@
 typedef struct {
     int             delta_t;    /* Centiseconds until fire (0 = empty) */
     agc_taskfunc_t  task;       /* Task function to call */
+    /* Longcall state for delays > 16383 centiseconds */
+    agc_taskfunc_t  longcall_target;    /* Final target task */
+    int             longcall_remaining; /* Remaining time after current chunk */
 } agc_waitlist_slot_t;
 
 /* Task slots: LST1 holds delta-times, LST2 holds task addresses */

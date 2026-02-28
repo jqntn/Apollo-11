@@ -24,7 +24,13 @@ agc_waitlist_slot_t agc_waitlist[NUM_WAITLIST_TASKS];
 
 void waitlist_init(void)
 {
-    memset(agc_waitlist, 0, sizeof(agc_waitlist));
+    int i;
+    for (i = 0; i < NUM_WAITLIST_TASKS; i++) {
+        agc_waitlist[i].delta_t = 0;
+        agc_waitlist[i].task = NULL;
+        agc_waitlist[i].longcall_target = NULL;
+        agc_waitlist[i].longcall_remaining = 0;
+    }
 }
 
 /* ----------------------------------------------------------------
@@ -41,6 +47,9 @@ int waitlist_add(int dt_centisecs, agc_taskfunc_t task)
         if (agc_waitlist[i].task == NULL) {
             agc_waitlist[i].delta_t = dt_centisecs;
             agc_waitlist[i].task = task;
+            /* Clear any leftover longcall state */
+            agc_waitlist[i].longcall_target = NULL;
+            agc_waitlist[i].longcall_remaining = 0;
             return i;
         }
     }
@@ -60,30 +69,42 @@ int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
  * Long call: for delays > 16383 centiseconds
  * ---------------------------------------------------------------- */
 
-static void longcall_continue(void);
-static agc_taskfunc_t longcall_target;
-static int longcall_remaining;
-
 static void longcall_continue(void)
 {
-    if (longcall_remaining > 16383) {
-        longcall_remaining -= 16383;
-        waitlist_add(16383, longcall_continue);
-    } else if (longcall_remaining > 0) {
-        int dt = longcall_remaining;
-        longcall_remaining = 0;
-        waitlist_add(dt, longcall_target);
+    int i;
+    /* Find the slot that called this continuation */
+    for (i = 0; i < NUM_WAITLIST_TASKS; i++) {
+        if (agc_waitlist[i].task == longcall_continue) {
+            if (agc_waitlist[i].longcall_remaining > 16383) {
+                agc_waitlist[i].longcall_remaining -= 16383;
+                waitlist_add(16383, longcall_continue);
+            } else if (agc_waitlist[i].longcall_remaining > 0) {
+                int dt = agc_waitlist[i].longcall_remaining;
+                agc_taskfunc_t target = agc_waitlist[i].longcall_target;
+                agc_waitlist[i].longcall_remaining = 0;
+                agc_waitlist[i].longcall_target = NULL;
+                waitlist_add(dt, target);
+            }
+            break;
+        }
     }
 }
 
 int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
 {
+    int slot;
     if (dt_centisecs <= 16383) {
         return waitlist_add(dt_centisecs, task);
     }
-    longcall_target = task;
-    longcall_remaining = dt_centisecs - 16383;
-    return waitlist_add(16383, longcall_continue);
+    
+    /* Find a free slot for the initial chunk */
+    slot = waitlist_add(16383, longcall_continue);
+    if (slot >= 0) {
+        /* Store longcall state in the same slot */
+        agc_waitlist[slot].longcall_target = task;
+        agc_waitlist[slot].longcall_remaining = dt_centisecs - 16383;
+    }
+    return slot;
 }
 
 /* ----------------------------------------------------------------
@@ -103,6 +124,9 @@ void waitlist_t3rupt(void)
                 agc_taskfunc_t task = agc_waitlist[i].task;
                 agc_waitlist[i].task = NULL;
                 agc_waitlist[i].delta_t = 0;
+                /* Clear longcall state when task completes */
+                agc_waitlist[i].longcall_target = NULL;
+                agc_waitlist[i].longcall_remaining = 0;
                 task();
             }
         }
