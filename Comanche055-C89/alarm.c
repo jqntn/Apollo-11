@@ -47,5 +47,5 @@ void alarm_reset(void)
     agc_alarm_code = 0;
     agc_prog_alarm = 0;
     /* Clear PROG alarm light */
-    agc_channels[CHAN_DSALMOUT] &= ~BIT8;
+    agc_channels[CHAN_DSALMOUT] &= ~BIT11;
 }
