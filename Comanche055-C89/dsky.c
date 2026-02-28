@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dsky.h"
+#include "terminal.h"
 #include "agc_cpu.h"
 #include "alarm.h"
 
@@ -20,21 +21,6 @@
 
 #include <conio.h>
 #include <windows.h>
-
-static void win32_clear_screen(void)
-{
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD topLeft = {0, 0};
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    DWORD written, cells;
-
-    GetConsoleScreenBufferInfo(hOut, &csbi);
-    cells = csbi.dwSize.X * csbi.dwSize.Y;
-
-    FillConsoleOutputCharacterA(hOut, ' ', cells, topLeft, &written);
-    FillConsoleOutputAttribute(hOut, csbi.wAttributes, cells, topLeft, &written);
-    SetConsoleCursorPosition(hOut, topLeft);
-}
 
 int hal_kbhit(void) { return _kbhit(); }
 int hal_getch(void) { return _getch(); }
@@ -183,61 +169,67 @@ static void light_str(char *buf, int on, const char *name)
 
 static void dsky_render(void)
 {
-    /* Clear screen and home cursor */
-#ifdef _WIN32
-    win32_clear_screen();
-#else
-    printf("\033[2J\033[H");
-#endif
-
-    printf("+------------- DSKY -------------+\n");
-    printf("|                                |\n");
-
-    /* Status lights row 1 */
+    static int first_render = 1;
+    
+    if (first_render) {
+        /* First render: clear screen and draw static layout */
+        term_set_cursor(1, 1);
+        printf("+------------- DSKY -------------+\n");
+        printf("|                                |\n");
+        first_render = 0;
+    }
+    
+    /* Update status lights row 1 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_uplink_acty, "UPLINK");
         light_str(b, dsky_display.light_temp, "TEMP");
         light_str(c, dsky_display.light_prog_alarm, "PROG");
+        term_set_cursor(3, 2);
         printf("| %s %s %s  |\n", a, b, c);
     }
 
-    /* Status lights row 2 */
+    /* Update status lights row 2 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_gimbal_lock, "GIMBAL");
         light_str(b, dsky_display.light_stby, "STBY");
         light_str(c, dsky_display.light_restart, "RSTART");
+        term_set_cursor(4, 2);
         printf("| %s %s %s  |\n", a, b, c);
     }
 
-    /* Status lights row 3 */
+    /* Update status lights row 3 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_no_att, "NO ATT");
         light_str(b, dsky_display.light_key_rel, "KEY RL");
         light_str(c, dsky_display.light_tracker, "TRACKER");
+        term_set_cursor(5, 2);
         printf("| %s %s %s  |\n", a, b, c);
     }
 
-    /* Status lights row 4 */
+    /* Update status lights row 4 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_opr_err, "OPR ER");
         light_str(b, dsky_display.light_vel, "VEL");
         light_str(c, dsky_display.light_alt, "ALT");
+        term_set_cursor(6, 2);
         printf("| %s %s %s  |\n", a, b, c);
     }
 
     printf("|                                |\n");
 
     /* COMP ACTY and PROG display */
+    term_set_cursor(7, 2);
     printf("|  %s   PROG  %c%c          |\n",
            dsky_display.light_comp_acty ? "COMP ACTY" : "         ",
            digit_char(dsky_display.prog[0]),
            digit_char(dsky_display.prog[1]));
 
     /* VERB and NOUN */
+    term_set_cursor(8, 2);
     printf("|  VERB  %c%c    NOUN  %c%c          |\n",
            digit_char(dsky_display.verb[0]),
            digit_char(dsky_display.verb[1]),
@@ -247,6 +239,7 @@ static void dsky_render(void)
     printf("|                                |\n");
 
     /* R1 */
+    term_set_cursor(10, 2);
     printf("|  R1   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r1_sign),
            digit_char(dsky_display.r1[0]),
@@ -256,6 +249,7 @@ static void dsky_render(void)
            digit_char(dsky_display.r1[4]));
 
     /* R2 */
+    term_set_cursor(11, 2);
     printf("|  R2   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r2_sign),
            digit_char(dsky_display.r2[0]),
@@ -265,6 +259,7 @@ static void dsky_render(void)
            digit_char(dsky_display.r2[4]));
 
     /* R3 */
+    term_set_cursor(12, 2);
     printf("|  R3   %s%c%c%c%c%c                   |\n",
            sign_str(dsky_display.r3_sign),
            digit_char(dsky_display.r3[0]),
@@ -411,8 +406,17 @@ void dsky_poll_input(void)
  * Console backend struct
  * ---------------------------------------------------------------- */
 
-static void console_be_init(void)    { hal_term_init(); }
-static void console_be_cleanup(void) { hal_term_cleanup(); }
+static void console_be_init(void)    
+{ 
+    hal_term_init(); 
+    term_init();  /* Initialize shared terminal system */
+}
+
+static void console_be_cleanup(void) 
+{ 
+    term_cleanup();  /* Cleanup shared terminal system */
+    hal_term_cleanup(); 
+}
 
 dsky_backend_t dsky_console_backend = {
     console_be_init,
