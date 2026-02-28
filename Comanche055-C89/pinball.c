@@ -533,7 +533,14 @@ void pinball_keypress(int keycode)
                 program_change(val);
                 pinball_mode = PINBALL_MODE_IDLE;
             } else {
-                /* V21-V25: store loaded value */
+                /* V21-V25: store loaded value with user-entered sign */
+                int sign = 0;
+                switch (pinball_data_reg) {
+                    case 1: sign = dsky_display.r1_sign; break;
+                    case 2: sign = dsky_display.r2_sign; break;
+                    case 3: sign = dsky_display.r3_sign; break;
+                }
+                if (sign < 0) val = -val;
                 pinball_display_val(pinball_data_reg, val, 1);
                 /* For V24/V25, advance to next register */
                 if (pinball_verb == 24 && pinball_data_reg == 1) {
