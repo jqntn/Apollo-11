@@ -81,6 +81,10 @@ Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
       <img src="assets/ui-win32-gdi.png" alt="Win32 GDI UI" style="height: 300px; object-fit: contain;">
       <br><br><strong>Win32 GDI Interface</strong>
     </td>
+    <td style="text-align: center; padding: 20px; vertical-align: top;">
+      <img src="assets/ui-web.png" alt="Web UI" style="height: 300px; object-fit: contain;">
+      <br><br><strong>Web Interface</strong>
+    </td>
   </tr>
 </table>
 
