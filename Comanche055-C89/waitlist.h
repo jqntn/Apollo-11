@@ -17,9 +17,6 @@
 typedef struct {
     int             delta_t;    /* Centiseconds until fire (0 = empty) */
     agc_taskfunc_t  task;       /* Task function to call */
-    /* Longcall state for delays > 16383 centiseconds */
-    agc_taskfunc_t  longcall_target;    /* Final target task */
-    int             longcall_remaining; /* Remaining time after current chunk */
 } agc_waitlist_slot_t;
 
 /* Task slots: LST1 holds delta-times, LST2 holds task addresses */
@@ -39,7 +36,8 @@ int waitlist_add(int dt_centisecs, agc_taskfunc_t task);
 /* Reschedule from within a running task: fixed delay */
 int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task);
 
-/* Long call: for delays > 16383 centiseconds (163.84 sec) */
+/* Long call: for delays > 16383 centiseconds (163.84 sec)
+ * Note: Only one longcall can be active at a time (original AGC behavior) */
 int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task);
 
 /* T3RUPT dispatch: decrement all timers, fire any that reach zero.

@@ -18,6 +18,11 @@
 
 agc_waitlist_slot_t agc_waitlist[NUM_WAITLIST_TASKS];
 
+/* Global longcall state (original AGC behavior) */
+static agc_taskfunc_t longcall_target = NULL;
+static int longcall_remaining = 0;
+static int longcall_active = 0;
+
 /* ----------------------------------------------------------------
  * Init
  * ---------------------------------------------------------------- */
@@ -28,9 +33,11 @@ void waitlist_init(void)
     for (i = 0; i < NUM_WAITLIST_TASKS; i++) {
         agc_waitlist[i].delta_t = 0;
         agc_waitlist[i].task = NULL;
-        agc_waitlist[i].longcall_target = NULL;
-        agc_waitlist[i].longcall_remaining = 0;
     }
+    /* Initialize global longcall state */
+    longcall_target = NULL;
+    longcall_remaining = 0;
+    longcall_active = 0;
 }
 
 /* ----------------------------------------------------------------
@@ -47,9 +54,6 @@ int waitlist_add(int dt_centisecs, agc_taskfunc_t task)
         if (agc_waitlist[i].task == NULL) {
             agc_waitlist[i].delta_t = dt_centisecs;
             agc_waitlist[i].task = task;
-            /* Clear any leftover longcall state */
-            agc_waitlist[i].longcall_target = NULL;
-            agc_waitlist[i].longcall_remaining = 0;
             return i;
         }
     }
@@ -69,24 +73,21 @@ int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
  * Long call: for delays > 16383 centiseconds
  * ---------------------------------------------------------------- */
 
-static void longcall_continue(void)
+/* LONGCYCL continuation task (original AGC behavior) */
+static void longcyl(void)
 {
-    int i;
-    /* Find the slot that called this continuation */
-    for (i = 0; i < NUM_WAITLIST_TASKS; i++) {
-        if (agc_waitlist[i].task == longcall_continue) {
-            if (agc_waitlist[i].longcall_remaining > 16383) {
-                agc_waitlist[i].longcall_remaining -= 16383;
-                waitlist_add(16383, longcall_continue);
-            } else if (agc_waitlist[i].longcall_remaining > 0) {
-                int dt = agc_waitlist[i].longcall_remaining;
-                agc_taskfunc_t target = agc_waitlist[i].longcall_target;
-                agc_waitlist[i].longcall_remaining = 0;
-                agc_waitlist[i].longcall_target = NULL;
-                waitlist_add(dt, target);
-            }
-            break;
-        }
+    if (longcall_remaining > 16383) {
+        /* MUCHTIME path: more than 1.25 minutes remaining */
+        longcall_remaining -= 16383;
+        waitlist_add(16383, longcyl);
+    } else if (longcall_remaining > 0) {
+        /* LASTTIME path: final chunk, schedule target task */
+        int dt = longcall_remaining;
+        agc_taskfunc_t target = longcall_target;
+        longcall_remaining = 0;
+        longcall_target = NULL;
+        longcall_active = 0;
+        waitlist_add(dt, target);
     }
 }
 
@@ -97,12 +98,18 @@ int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
         return waitlist_add(dt_centisecs, task);
     }
     
+    /* Check if longcall already active (original AGC behavior) */
+    if (longcall_active) {
+        return -1;  /* Longcall already in progress */
+    }
+    
     /* Find a free slot for the initial chunk */
-    slot = waitlist_add(16383, longcall_continue);
+    slot = waitlist_add(16383, longcyl);
     if (slot >= 0) {
-        /* Store longcall state in the same slot */
-        agc_waitlist[slot].longcall_target = task;
-        agc_waitlist[slot].longcall_remaining = dt_centisecs - 16383;
+        /* Store longcall state globally */
+        longcall_target = task;
+        longcall_remaining = dt_centisecs - 16383;
+        longcall_active = 1;
     }
     return slot;
 }
@@ -124,9 +131,6 @@ void waitlist_t3rupt(void)
                 agc_taskfunc_t task = agc_waitlist[i].task;
                 agc_waitlist[i].task = NULL;
                 agc_waitlist[i].delta_t = 0;
-                /* Clear longcall state when task completes */
-                agc_waitlist[i].longcall_target = NULL;
-                agc_waitlist[i].longcall_remaining = 0;
                 task();
             }
         }
