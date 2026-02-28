@@ -5,6 +5,8 @@
  * Renders the DSKY as a graphical window using native Win32 GDI.
  */
 
+#include "dsky_backend.h"
+
 #ifdef _WIN32
 
 #include <windows.h>
