@@ -115,3 +115,59 @@ void agc_init(void)
     /* Channel 33: IMODES33 initial state */
     agc_channels[CHAN_CHAN33] = 037777;
 }
+
+/* ----------------------------------------------------------------
+ * AGC 1's complement arithmetic helper functions
+ * ---------------------------------------------------------------- */
+
+/* Clamp/overflow correction: AGC overflow wraps around through +-0 */
+agc_word_t agc_overflow_correct(int val)
+{
+    while (val > 16383)  val -= 32767;
+    while (val < -16383) val += 32767;
+    return (agc_word_t)val;
+}
+
+/* 1's complement addition: a + b with overflow correction */
+agc_word_t agc_add(agc_word_t a, agc_word_t b)
+{
+    int sum = (int)a + (int)b;
+    return agc_overflow_correct(sum);
+}
+
+/* 1's complement negation (complement): -0 maps to +0 and vice versa */
+agc_word_t agc_negate(agc_word_t val)
+{
+    return (agc_word_t)(-(int)val);
+}
+
+/* Absolute value for AGC 1's complement */
+agc_word_t agc_abs(agc_word_t val)
+{
+    return (val < 0) ? agc_negate(val) : val;
+}
+
+/* Diminished absolute value (CCS behavior):
+ * if val > 0, return val-1
+ * if val == +0, return 0
+ * if val < 0, return |val|-1
+ * if val == -0, return 0 */
+agc_word_t agc_dabs(agc_word_t val)
+{
+    if (val > 0) return (agc_word_t)(val - 1);
+    if (val < 0) return (agc_word_t)(-(int)val - 1);
+    return 0;
+}
+
+/* CCS 4-way branch index:
+ * val > 0: return 0
+ * val == +0: return 1
+ * val < 0: return 2
+ * val == -0: return 3
+ * (In C, we can't distinguish +0/-0 in 2's complement, so -0 path unused) */
+int agc_ccs_branch(agc_word_t val)
+{
+    if (val > 0) return 0;
+    if (val == 0) return 1;  /* +0 */
+    return 2;                /* < 0 */
+}
