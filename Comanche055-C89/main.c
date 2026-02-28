@@ -31,6 +31,16 @@
 #include "dsky_web.h"
 #endif
 
+/* Cross-platform terminal capabilities */
+typedef struct {
+    int supports_alternate_buffer;
+    int supports_cursor_positioning;
+    int supports_line_clearing;
+    int supports_cursor_hide;
+} term_capabilities_t;
+
+static term_capabilities_t term_caps;
+
 typedef struct {
     const char *label;
     dsky_backend_t *backend;
@@ -66,6 +76,85 @@ static void menu_clear_screen(void)
 #else
     printf("\033[2J\033[H");
 #endif
+}
+
+/* Cross-platform terminal detection and setup */
+static void term_detect_capabilities(void)
+{
+    /* Assume basic ANSI support everywhere */
+    term_caps.supports_cursor_positioning = 1;
+    term_caps.supports_line_clearing = 1;
+    term_caps.supports_cursor_hide = 1;
+    term_caps.supports_alternate_buffer = 0;
+    
+#ifdef _WIN32
+    /* Windows: Check if ANSI is supported */
+    HANDLE h_out = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode;
+    if (GetConsoleMode(h_out, &mode)) {
+        mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        if (SetConsoleMode(h_out, mode)) {
+            term_caps.supports_alternate_buffer = 1;
+        }
+    }
+#else
+    /* Unix/macOS: Assume modern terminal support */
+    term_caps.supports_alternate_buffer = 1;
+#endif
+}
+
+static void term_init(void)
+{
+    term_detect_capabilities();
+    
+    if (term_caps.supports_alternate_buffer) {
+        printf("\033[?1049h");  /* Enable alternate screen buffer */
+    } else {
+        menu_clear_screen();
+    }
+    
+    if (term_caps.supports_cursor_hide) {
+        printf("\033[?25l");  /* Hide cursor */
+    }
+    fflush(stdout);
+}
+
+static void term_cleanup(void)
+{
+    if (term_caps.supports_cursor_hide) {
+        printf("\033[?25h");  /* Show cursor */
+    }
+    
+    if (term_caps.supports_alternate_buffer) {
+        printf("\033[?1049l");  /* Restore original screen buffer */
+    } else {
+        menu_clear_screen();
+    }
+    fflush(stdout);
+}
+
+static void term_set_cursor(int line, int column)
+{
+    if (term_caps.supports_cursor_positioning) {
+        printf("\033[%d;%dH", line, column);
+    }
+}
+
+static void term_clear_line(int from_start)
+{
+    if (term_caps.supports_line_clearing) {
+        if (from_start) {
+            printf("\033[1K");  /* Clear from beginning to cursor */
+        } else {
+            printf("\033[K");    /* Clear from cursor to end */
+        }
+    }
+}
+
+static void term_write_at(int line, int column, const char *text)
+{
+    term_set_cursor(line, column);
+    printf("%s", text);
 }
 
 static int menu_read_key(int *selected_index)
@@ -110,24 +199,50 @@ static int menu_read_key(int *selected_index)
 static void menu_render(const backend_option_t *options, int count, int selected)
 {
     int i;
-    menu_clear_screen();
+    static int prev_selected = -1;
+    static int first_render = 1;
+    char line_buffer[256];
+    
+    if (first_render) {
+        /* Initialize cross-platform terminal */
+        term_init();
+        
+        /* Draw header */
+        term_write_at(1, 0, "===========================================");
+        term_write_at(2, 2, "COMANCHE 055 -- Colossus 2A");
+        term_write_at(3, 2, "Apollo 11 CM Guidance Computer");
+        term_write_at(4, 2, "ANSI C89 Port");
+        term_write_at(5, 0, "===========================================");
+        
+        /* Draw instructions */
+        snprintf(line_buffer, sizeof(line_buffer), "Select display mode (Up/Down + Enter, or 1-%d):", count);
+        term_write_at(7, 0, line_buffer);
 
-    printf("===========================================\n");
-    printf("  COMANCHE 055 -- Colossus 2A\n");
-    printf("  Apollo 11 CM Guidance Computer\n");
-    printf("  ANSI C89 Port\n");
-    printf("===========================================\n");
-    printf("\nSelect display mode (Up/Down + Enter, or 1-%d):\n\n", count);
-
-    for (i = 0; i < count; i++) {
-        if (i == selected) {
-            printf(" > [%d] %s\n", i + 1, options[i].label);
-        } else {
-            printf("   [%d] %s\n", i + 1, options[i].label);
+        /* Initial render of all menu items */
+        for (i = 0; i < count; i++) {
+            snprintf(line_buffer, sizeof(line_buffer), "%s [%d] %s", 
+                    (i == selected) ? ">" : " ", i + 1, options[i].label);
+            term_write_at(9 + i, 0, line_buffer);
         }
+        
+        fflush(stdout);
+        first_render = 0;
+        prev_selected = selected;
+    } else if (selected != prev_selected) {
+        /* Only update the previously selected and currently selected lines */
+        int menu_start_line = 9;
+        
+        /* Update previously selected line to unselected */
+        snprintf(line_buffer, sizeof(line_buffer), "  [%d] %s", prev_selected + 1, options[prev_selected].label);
+        term_write_at(menu_start_line + prev_selected, 0, line_buffer);
+        
+        /* Update currently selected line to selected */
+        snprintf(line_buffer, sizeof(line_buffer), "> [%d] %s", selected + 1, options[selected].label);
+        term_write_at(menu_start_line + selected, 0, line_buffer);
+        
+        fflush(stdout);
+        prev_selected = selected;
     }
-
-    fflush(stdout);
 }
 
 static dsky_backend_t *select_backend_interactive(void)
@@ -187,7 +302,7 @@ static dsky_backend_t *select_backend_interactive(void)
     }
 
     hal_term_cleanup();
-    menu_clear_screen();
+    term_cleanup();
     return options[selected].backend;
 }
 
