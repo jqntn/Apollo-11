@@ -442,4 +442,21 @@ dsky_backend_t dsky_gui_backend = {
     gui_init, gui_update, gui_poll, gui_cleanup, gui_sleep
 };
 
+#else /* !_WIN32 */
+
+/* ----------------------------------------------------------------
+ * Non-Windows stub implementation
+ * Prevents empty translation unit errors on non-Windows platforms
+ * ---------------------------------------------------------------- */
+
+static void stub_init(void) {}
+static void stub_update(void) {}
+static void stub_poll(void) {}
+static void stub_cleanup(void) {}
+static void stub_sleep(int ms) { (void)ms; }
+
+dsky_backend_t dsky_gui_backend = {
+    stub_init, stub_update, stub_poll, stub_cleanup, stub_sleep
+};
+
 #endif /* _WIN32 */
