@@ -1,3 +1,9 @@
+#ifdef _WIN32
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#endif
+
 /*
  * main.c -- Entry point, main loop, timing
  *
@@ -43,31 +49,7 @@ typedef struct {
 #define MENU_KEY_ENTER  3
 #define MENU_KEY_SELECT 4
 
-static void menu_clear_screen(void)
-{
-#ifdef _WIN32
-    HANDLE h_out;
-    COORD top_left;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    DWORD written;
-    DWORD cells;
-
-    h_out = GetStdHandle(STD_OUTPUT_HANDLE);
-    top_left.X = 0;
-    top_left.Y = 0;
-
-    if (GetConsoleScreenBufferInfo(h_out, &csbi)) {
-        cells = (DWORD)csbi.dwSize.X * (DWORD)csbi.dwSize.Y;
-        FillConsoleOutputCharacterA(h_out, ' ', cells, top_left, &written);
-        FillConsoleOutputAttribute(h_out, csbi.wAttributes, cells, top_left, &written);
-        SetConsoleCursorPosition(h_out, top_left);
-    } else {
-        printf("\033[2J\033[H");
-    }
-#else
-    printf("\033[2J\033[H");
-#endif
-}
+/* Remove unused menu_clear_screen function - replaced by shared terminal module */
 
 static int menu_read_key(int *selected_index)
 {
@@ -127,12 +109,12 @@ static void menu_render(const backend_option_t *options, int count, int selected
         term_write_at(5, 0, "===========================================");
         
         /* Draw instructions */
-        snprintf(line_buffer, sizeof(line_buffer), "Select display mode (Up/Down + Enter, or 1-%d):", count);
+        sprintf(line_buffer, "Select display mode (Up/Down + Enter, or 1-%d):", count);
         term_write_at(7, 0, line_buffer);
 
         /* Initial render of all menu items */
         for (i = 0; i < count; i++) {
-            snprintf(line_buffer, sizeof(line_buffer), "%s [%d] %s", 
+            sprintf(line_buffer, "%s [%d] %s", 
                     (i == selected) ? ">" : " ", i + 1, options[i].label);
             term_write_at(9 + i, 0, line_buffer);
         }
@@ -145,11 +127,11 @@ static void menu_render(const backend_option_t *options, int count, int selected
         int menu_start_line = 9;
         
         /* Update previously selected line to unselected */
-        snprintf(line_buffer, sizeof(line_buffer), "  [%d] %s", prev_selected + 1, options[prev_selected].label);
+        sprintf(line_buffer, "  [%d] %s", prev_selected + 1, options[prev_selected].label);
         term_write_at(menu_start_line + prev_selected, 0, line_buffer);
         
         /* Update currently selected line to selected */
-        snprintf(line_buffer, sizeof(line_buffer), "> [%d] %s", selected + 1, options[selected].label);
+        sprintf(line_buffer, "> [%d] %s", selected + 1, options[selected].label);
         term_write_at(menu_start_line + selected, 0, line_buffer);
         
         fflush(stdout);

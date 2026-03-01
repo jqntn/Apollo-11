@@ -172,15 +172,10 @@ static void dsky_render(void)
     static int first_render = 1;
     
     if (first_render) {
-        /* First render: clear screen and draw complete static layout */
-        if (term_caps.supports_alternate_buffer) {
-            /* Using alternate buffer - no clear needed, just position at top */
-            term_set_cursor(1, 1);
-        } else {
-            /* Fallback mode - clear screen first */
-            printf("\033[2J\033[H");
-        }
+        /* First render: clear screen and draw complete layout */
+        printf("\033[2J\033[H");
         
+        /* Draw complete DSKY layout - menu already cleared screen */
         printf("+------------- DSKY -------------+\n");
         printf("|                                |\n");
         printf("|                                |\n");
@@ -201,6 +196,7 @@ static void dsky_render(void)
         printf("| Q=QUIT                         |\n");
         printf("|                                |\n");
         printf("+--------------------------------+\n");
+        
         first_render = 0;
     }
     
