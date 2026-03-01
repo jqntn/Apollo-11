@@ -60,12 +60,15 @@ static int menu_read_key(int *selected_index)
 #endif
     *selected_index = -1;
 
-    if (!hal_kbhit()) return MENU_KEY_NONE;
+    if (!hal_kbhit())
+        return MENU_KEY_NONE;
 
     ch = hal_getch();
-    if (ch < 0) return MENU_KEY_NONE;
+    if (ch < 0)
+        return MENU_KEY_NONE;
 
-    if (ch == '\r' || ch == '\n') return MENU_KEY_ENTER;
+    if (ch == '\r' || ch == '\n')
+        return MENU_KEY_ENTER;
     if (ch >= '1' && ch <= '9') {
         *selected_index = ch - '1';
         return MENU_KEY_SELECT;
@@ -74,16 +77,21 @@ static int menu_read_key(int *selected_index)
 #ifdef _WIN32
     if (ch == 0 || ch == 224) {
         next = hal_getch();
-        if (next == 72) return MENU_KEY_UP;
-        if (next == 80) return MENU_KEY_DOWN;
+        if (next == 72)
+            return MENU_KEY_UP;
+        if (next == 80)
+            return MENU_KEY_DOWN;
     }
 #else
     if (ch == 27) {
         next = hal_getch();
-        if (next != '[') return MENU_KEY_NONE;
+        if (next != '[')
+            return MENU_KEY_NONE;
         third = hal_getch();
-        if (third == 'A') return MENU_KEY_UP;
-        if (third == 'B') return MENU_KEY_DOWN;
+        if (third == 'A')
+            return MENU_KEY_UP;
+        if (third == 'B')
+            return MENU_KEY_DOWN;
     }
 #endif
 
@@ -102,21 +110,28 @@ static void menu_render(const backend_option_t *options, int count, int selected
         term_init();
         
         /* Draw header */
-        term_write_at(1, 0, "===========================================");
-        term_write_at(2, 2, "COMANCHE 055 -- Colossus 2A");
-        term_write_at(3, 2, "Apollo 11 CM Guidance Computer");
-        term_write_at(4, 2, "ANSI C89 Port");
-        term_write_at(5, 0, "===========================================");
+        term_set_cursor(1, 0);
+        printf("===========================================");
+        term_set_cursor(2, 2);
+        printf("COMANCHE 055 -- Colossus 2A");
+        term_set_cursor(3, 2);
+        printf("Apollo 11 CM Guidance Computer");
+        term_set_cursor(4, 2);
+        printf("ANSI C89 Port");
+        term_set_cursor(5, 0);
+        printf("===========================================");
         
         /* Draw instructions */
         sprintf(line_buffer, "Select display mode (Up/Down + Enter, or 1-%d):", count);
-        term_write_at(7, 0, line_buffer);
+        term_set_cursor(7, 0);
+        printf("%s", line_buffer);
 
         /* Initial render of all menu items */
         for (i = 0; i < count; i++) {
             sprintf(line_buffer, "%s [%d] %s", 
                     (i == selected) ? ">" : " ", i + 1, options[i].label);
-            term_write_at(9 + i, 0, line_buffer);
+            term_set_cursor(9 + i, 0);
+            printf("%s", line_buffer);
         }
         
         fflush(stdout);
@@ -128,11 +143,13 @@ static void menu_render(const backend_option_t *options, int count, int selected
         
         /* Update previously selected line to unselected */
         sprintf(line_buffer, "  [%d] %s", prev_selected + 1, options[prev_selected].label);
-        term_write_at(menu_start_line + prev_selected, 0, line_buffer);
+        term_set_cursor(menu_start_line + prev_selected, 0);
+        printf("%s", line_buffer);
         
         /* Update currently selected line to selected */
         sprintf(line_buffer, "> [%d] %s", selected + 1, options[selected].label);
-        term_write_at(menu_start_line + selected, 0, line_buffer);
+        term_set_cursor(menu_start_line + selected, 0);
+        printf("%s", line_buffer);
         
         fflush(stdout);
         prev_selected = selected;
@@ -198,8 +215,7 @@ static dsky_backend_t *select_backend_interactive(void)
     hal_term_cleanup();
     term_cleanup();
     /* Always clear screen when exiting menu for clean transition to DSKY */
-    printf("\033[2J\033[H");
-    fflush(stdout);
+    term_clear_screen();
     return options[selected].backend;
 }
 
@@ -207,7 +223,8 @@ static dsky_backend_t *select_backend_interactive(void)
 static void maybe_open_web_ui(dsky_backend_t *backend)
 {
     int rc;
-    if (backend != &dsky_web_backend) return;
+    if (backend != &dsky_web_backend)
+        return;
 
     printf("Opening browser at http://127.0.0.1:8080/\n");
     rc = system("cmd /c start \"\" \"http://127.0.0.1:8080/\"");

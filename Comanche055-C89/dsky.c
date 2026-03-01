@@ -173,7 +173,7 @@ static void dsky_render(void)
     
     if (first_render) {
         /* First render: clear screen and draw complete layout */
-        printf("\033[2J\033[H");
+        term_clear_screen();
         
         /* Draw complete DSKY layout - menu already cleared screen */
         printf("+------------- DSKY -------------+\n");
@@ -400,7 +400,7 @@ void dsky_poll_input(void)
         case 'r': case 'R': keycode = DSKY_KEY_RSET; break;
         case 'q': case 'Q':
             hal_term_cleanup();
-            printf("\033[2J\033[H");  /* Full screen clear before exit */
+            term_clear_screen();  /* Full screen clear before exit */
             printf("Comanche055 terminated.\n");
             exit(0);
             break;
