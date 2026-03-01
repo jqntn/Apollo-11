@@ -215,6 +215,9 @@ static dsky_backend_t *select_backend_interactive(void)
 
     hal_term_cleanup();
     term_cleanup();
+    /* Always clear screen when exiting menu for clean transition to DSKY */
+    printf("\033[2J\033[H");
+    fflush(stdout);
     return options[selected].backend;
 }
 
@@ -240,7 +243,7 @@ int main(void)
     /* Select display backend */
     backend = select_backend_interactive();
 
-    printf("\nInitializing AGC...\n");
+    printf("Initializing AGC...\n");
 
     /* Initialize all subsystems */
     agc_init();
@@ -261,13 +264,6 @@ int main(void)
 #ifdef _WIN32
     maybe_open_web_ui(backend);
 #endif
-
-    /* Console mode: wait for keypress before entering main loop */
-    if (backend == &dsky_console_backend) {
-        printf("AGC ready. Entering P00 (CMC Idling).\n");
-        printf("Press any key to start...\n");
-        hal_getch();
-    }
 
     /* Force initial display */
     pinball_show_prog(0);

@@ -173,7 +173,14 @@ static void dsky_render(void)
     
     if (first_render) {
         /* First render: clear screen and draw complete static layout */
-        term_set_cursor(1, 1);
+        if (term_caps.supports_alternate_buffer) {
+            /* Using alternate buffer - no clear needed, just position at top */
+            term_set_cursor(1, 1);
+        } else {
+            /* Fallback mode - clear screen first */
+            printf("\033[2J\033[H");
+        }
+        
         printf("+------------- DSKY -------------+\n");
         printf("|                                |\n");
         printf("|                                |\n");
@@ -192,6 +199,7 @@ static void dsky_render(void)
         printf("| 0-9=digits +=PLUS -=MINUS      |\n");
         printf("| C=CLR  P=PRO  K=KREL  R=RSET   |\n");
         printf("| Q=QUIT                         |\n");
+        printf("|                                |\n");
         printf("+--------------------------------+\n");
         first_render = 0;
     }
@@ -203,7 +211,7 @@ static void dsky_render(void)
         light_str(b, dsky_display.light_temp, "TEMP");
         light_str(c, dsky_display.light_prog_alarm, "PROG");
         term_set_cursor(3, 2);
-        printf("| %s %s %s  |", a, b, c);
+        printf(" %s %s %s  ", a, b, c);
     }
 
     /* Update status lights row 2 */
@@ -213,7 +221,7 @@ static void dsky_render(void)
         light_str(b, dsky_display.light_stby, "STBY");
         light_str(c, dsky_display.light_restart, "RSTART");
         term_set_cursor(4, 2);
-        printf("| %s %s %s  |", a, b, c);
+        printf(" %s %s %s  ", a, b, c);
     }
 
     /* Update status lights row 3 */
@@ -223,7 +231,7 @@ static void dsky_render(void)
         light_str(b, dsky_display.light_key_rel, "KEY RL");
         light_str(c, dsky_display.light_tracker, "TRACKER");
         term_set_cursor(5, 2);
-        printf("| %s %s %s  |", a, b, c);
+        printf(" %s %s %s  ", a, b, c);
     }
 
     /* Update status lights row 4 */
@@ -233,27 +241,27 @@ static void dsky_render(void)
         light_str(b, dsky_display.light_vel, "VEL");
         light_str(c, dsky_display.light_alt, "ALT");
         term_set_cursor(6, 2);
-        printf("| %s %s %s  |", a, b, c);
+        printf(" %s %s %s  ", a, b, c);
     }
 
     /* COMP ACTY and PROG display */
-    term_set_cursor(7, 2);
-    printf("|  %s   PROG  %c%c          |",
+    term_set_cursor(8, 2);
+    printf("  %s   PROG  %c%c          ",
            dsky_display.light_comp_acty ? "COMP ACTY" : "         ",
            digit_char(dsky_display.prog[0]),
            digit_char(dsky_display.prog[1]));
 
     /* VERB and NOUN */
-    term_set_cursor(8, 2);
-    printf("|  VERB  %c%c    NOUN  %c%c          |",
+    term_set_cursor(9, 2);
+    printf("  VERB  %c%c    NOUN  %c%c          ",
            digit_char(dsky_display.verb[0]),
            digit_char(dsky_display.verb[1]),
            digit_char(dsky_display.noun[0]),
            digit_char(dsky_display.noun[1]));
 
     /* R1 */
-    term_set_cursor(10, 2);
-    printf("|  R1   %s%c%c%c%c%c                   |",
+    term_set_cursor(11, 2);
+    printf("  R1   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r1_sign),
            digit_char(dsky_display.r1[0]),
            digit_char(dsky_display.r1[1]),
@@ -262,8 +270,8 @@ static void dsky_render(void)
            digit_char(dsky_display.r1[4]));
 
     /* R2 */
-    term_set_cursor(11, 2);
-    printf("|  R2   %s%c%c%c%c%c                   |",
+    term_set_cursor(12, 2);
+    printf("  R2   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r2_sign),
            digit_char(dsky_display.r2[0]),
            digit_char(dsky_display.r2[1]),
@@ -272,8 +280,8 @@ static void dsky_render(void)
            digit_char(dsky_display.r2[4]));
 
     /* R3 */
-    term_set_cursor(12, 2);
-    printf("|  R3   %s%c%c%c%c%c                   |",
+    term_set_cursor(13, 2);
+    printf("  R3   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r3_sign),
            digit_char(dsky_display.r3[0]),
            digit_char(dsky_display.r3[1]),
@@ -396,7 +404,8 @@ void dsky_poll_input(void)
         case 'r': case 'R': keycode = DSKY_KEY_RSET; break;
         case 'q': case 'Q':
             hal_term_cleanup();
-            printf("\nComanche055 terminated.\n");
+            printf("\033[2J\033[H");  /* Full screen clear before exit */
+            printf("Comanche055 terminated.\n");
             exit(0);
             break;
         default:
