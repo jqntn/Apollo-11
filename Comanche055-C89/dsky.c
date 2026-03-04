@@ -312,7 +312,7 @@ void dsky_t4rupt(void)
     dsky_display.light_opr_err     = (ch11 & BIT12) ? 1 : 0;
 }
 
-static void dsky_set_comp_acty(int on)
+void dsky_set_comp_acty(int on)
 {
     if (on)
         agc_channels[CHAN_DSALMOUT] |= BIT1;

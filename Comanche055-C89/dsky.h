@@ -84,6 +84,7 @@ void dsky_update(void);
 void dsky_poll_input(void);
 void dsky_submit_key(int keycode);
 void dsky_t4rupt(void);
+void dsky_set_comp_acty(int on);
 
 /* ----------------------------------------------------------------
  * Platform HAL

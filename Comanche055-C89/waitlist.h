@@ -24,6 +24,8 @@ extern agc_waitlist_slot_t agc_waitlist[NUM_WAITLIST_TASKS];
 
 void waitlist_init(void);
 int waitlist_add(int dt_centisecs, agc_taskfunc_t task);
+int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task);
+int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task);
 void waitlist_t3rupt(void);
 
 #endif /* WAITLIST_H */

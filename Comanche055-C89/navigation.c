@@ -74,7 +74,7 @@ void nav_init(void)
  * Eccentricity from angular momentum: e^2 = 1 - h^2/(mu*a)
  */
 
-static void nav_compute_orbit(const agc_state_vector_t *sv,
+void nav_compute_orbit(const agc_state_vector_t *sv,
                        long *apogee_km, long *perigee_km,
                        long *period_sec)
 {

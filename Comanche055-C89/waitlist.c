@@ -52,7 +52,7 @@ int waitlist_add(int dt_centisecs, agc_taskfunc_t task)
     return -1;
 }
 
-static int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
+int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
 {
     return waitlist_add(dt_centisecs, task);
 }
@@ -79,7 +79,7 @@ static void longcyl(void)
     }
 }
 
-static int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
+int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
 {
     int slot;
     if (dt_centisecs <= 16383)
