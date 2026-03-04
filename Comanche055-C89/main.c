@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "args.h"
 #include "menu.h"
 #include "agc_cpu.h"
 #include "executive.h"
@@ -19,11 +20,13 @@
  * Main
  * ---------------------------------------------------------------- */
 
-int main(void)
+int main(int argc, char *argv[])
 {
     dsky_backend_t *backend;
 
-    backend = menu_select_backend();
+    backend = args_parse_backend(argc, argv);
+    if (!backend)
+        backend = menu_select_backend();
 
     printf("Initializing AGC...\n");
 

@@ -4,6 +4,7 @@ project(comanche055 LANGUAGES C)
 
 add_executable(comanche055
     main.c
+    args.c
     menu.c
     terminal.c
     agc_math.c

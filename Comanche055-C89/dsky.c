@@ -23,10 +23,31 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+static DWORD hal_orig_console_mode = 0;
+static int hal_console_mode_saved = 0;
+
 int hal_kbhit(void) { return _kbhit(); }
 int hal_getch(void) { return _getch(); }
-void hal_term_init(void) { }
-void hal_term_cleanup(void) { }
+
+void hal_term_init(void)
+{
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (h != INVALID_HANDLE_VALUE) {
+        GetConsoleMode(h, &hal_orig_console_mode);
+        hal_console_mode_saved = 1;
+        SetConsoleMode(h, hal_orig_console_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+}
+
+void hal_term_cleanup(void)
+{
+    if (hal_console_mode_saved) {
+        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleMode(h, hal_orig_console_mode);
+        hal_console_mode_saved = 0;
+    }
+}
+
 void hal_sleep_ms(int ms) { Sleep(ms); }
 
 #else
@@ -277,6 +298,7 @@ static void dsky_render(void)
            digit_char(dsky_display.r3[3]),
            digit_char(dsky_display.r3[4]));
 
+    term_set_cursor(21, 0);
     fflush(stdout);
 }
 
@@ -367,8 +389,9 @@ void dsky_poll_input(void)
     case 'k': case 'K': keycode = DSKY_KEY_KREL; break;
     case 'r': case 'R': keycode = DSKY_KEY_RSET; break;
     case 'q': case 'Q':
-        hal_term_cleanup();
+        term_cleanup();
         term_clear_screen();
+        hal_term_cleanup();
         printf("Comanche055 terminated.\n");
         exit(0);
         break;

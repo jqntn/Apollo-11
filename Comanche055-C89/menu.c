@@ -11,7 +11,6 @@
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "menu.h"
 #include "dsky.h"
 #include "terminal.h"
@@ -123,6 +122,7 @@ static void menu_render(const backend_option_t *options, int count,
             printf("%s", line_buffer);
         }
 
+        term_set_cursor(9 + count, 0);
         fflush(stdout);
         first_render = 0;
         prev_selected = selected;
@@ -139,6 +139,7 @@ static void menu_render(const backend_option_t *options, int count,
         term_set_cursor(menu_start_line + selected, 0);
         printf("%s", line_buffer);
 
+        term_set_cursor(9 + count, 0);
         fflush(stdout);
         prev_selected = selected;
     }
@@ -201,18 +202,6 @@ dsky_backend_t *menu_select_backend(void)
     hal_term_cleanup();
     term_cleanup();
     term_clear_screen();
-
-#ifdef _WIN32
-    if (options[selected].backend == &dsky_web_backend) {
-        int rc;
-        printf("Opening browser at http://127.0.0.1:8080/\n");
-        rc = system("cmd /c start \"\" \"http://127.0.0.1:8080/\"");
-        if (rc != 0) {
-            printf("Could not open browser automatically.\n");
-            printf("Open this URL manually: http://127.0.0.1:8080/\n");
-        }
-    }
-#endif
 
     return options[selected].backend;
 }

@@ -893,6 +893,7 @@ static void web_init_server(void)
     int i;
     int on;
     int html_len;
+    int rc;
 
     /* Keep a hard bound: root page + response headers must fit TX buffer. */
     html_len = (int)strlen(web_index_html);
@@ -957,6 +958,13 @@ static void web_init_server(void)
     web_running = 1;
 
     printf("Web backend listening on http://127.0.0.1:%d/\n", WEB_PORT);
+
+    printf("Opening browser at http://127.0.0.1:%d/\n", WEB_PORT);
+    rc = system("cmd /c start \"\" \"http://127.0.0.1:8080/\"");
+    if (rc != 0) {
+        printf("Could not open browser automatically.\n");
+        printf("Open this URL manually: http://127.0.0.1:%d/\n", WEB_PORT);
+    }
 }
 
 static void web_update_server(void)
