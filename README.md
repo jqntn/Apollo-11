@@ -6,7 +6,7 @@ Translated from the original AGC assembly source at [chrislgarry/Apollo-11](http
 
 ## Overview
 
-Self-contained, single-threaded console application with no external dependencies or libraries.
+Self-contained, single-threaded console application.
 
 Faithfully reproduces AGC fixed-point arithmetic, the executive job scheduler, waitlist timer system, and DSKY verb/noun interface.
 
@@ -52,6 +52,14 @@ Source is in `Comanche055-C89/`.
 > ./comanche055
 ```
 
+Or skip the menu with a display mode argument:
+
+```cmd
+> ./comanche055 console
+> ./comanche055 gui
+> ./comanche055 web
+```
+
 Keyboard mapping is shown on the DSKY display:
 
 | Key | Function |
@@ -71,26 +79,12 @@ Example: type `V 3 5 E` for lamp test, `V 1 6 N 3 6 E` for mission clock.
 
 ## Screenshots
 
-<table>
-  <tr>
-    <td style="text-align: center; padding: 20px; vertical-align: top;">
-      <img src="assets/ui-ascii.png" alt="ASCII UI" style="height: 300px; object-fit: contain;">
-      <br><br><strong>ASCII Terminal Interface</strong>
-    </td>
-    <td style="text-align: center; padding: 20px; vertical-align: top;">
-      <img src="assets/ui-win32-gdi.png" alt="Win32 GDI UI" style="height: 300px; object-fit: contain;">
-      <br><br><strong>Win32 GDI Interface</strong>
-    </td>
-    <td style="text-align: center; padding: 20px; vertical-align: top;">
-      <img src="assets/ui-web.png" alt="Web UI" style="height: 300px; object-fit: contain;">
-      <br><br><strong>Web Interface</strong>
-    </td>
-  </tr>
-</table>
+| ASCII Terminal | Win32 GDI | Web UI |
+|---|---|---|
+| ![ASCII UI](assets/ui-ascii.png) | ![Win32 GDI UI](assets/ui-win32-gdi.png) | ![Web UI](assets/ui-web.png) |
 
 ## Roadmap
 
-- [x] Graphical DSKY interface
 - [ ] Full program implementations (P20–P25, P30–P39, P40–P47, P51–P53, P61–P67)
 - [ ] State vector propagation and orbit integration
 - [ ] IMU simulation
