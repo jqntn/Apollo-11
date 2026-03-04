@@ -12,6 +12,8 @@
 #ifndef AGC_H
 #define AGC_H
 
+#include <stddef.h>  /* NULL */
+
 /* AGC word: 16-bit signed, represents 15 data bits + sign */
 typedef short agc_word_t;
 

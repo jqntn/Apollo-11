@@ -13,7 +13,6 @@
 #define PINBALL_H
 
 #include "agc.h"
-#include "dsky.h"
 
 /* ----------------------------------------------------------------
  * Verb/Noun state

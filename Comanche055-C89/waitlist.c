@@ -4,7 +4,6 @@
  * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
-#include <string.h>
 #include "waitlist.h"
 
 /* ----------------------------------------------------------------
@@ -53,7 +52,7 @@ int waitlist_add(int dt_centisecs, agc_taskfunc_t task)
     return -1;
 }
 
-int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
+static int waitlist_fixdelay(int dt_centisecs, agc_taskfunc_t task)
 {
     return waitlist_add(dt_centisecs, task);
 }
@@ -80,7 +79,7 @@ static void longcyl(void)
     }
 }
 
-int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
+static int waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
 {
     int slot;
     if (dt_centisecs <= 16383)

@@ -8,10 +8,14 @@
 #include "pinball.h"
 #include "agc_cpu.h"
 #include "alarm.h"
+#include "dsky.h"
 #include "executive.h"
+#include "navigation.h"
+#include "programs.h"
+#include "service.h"
 #include "waitlist.h"
 
-/* Forward declarations for verb handlers */
+/* Static forward declarations for verb handlers */
 static void verb_display_decimal(void);
 static void verb_display_octal(void);
 static void verb_monitor_decimal(void);
@@ -20,10 +24,6 @@ static void verb_lamp_test(void);
 static void verb_fresh_start(void);
 static void verb_change_program(void);
 static void verb_orbit_display(void);
-
-extern void program_change(int prognum);
-extern void program_r30_v82(void);
-extern void fresh_start(void);
 
 /* ----------------------------------------------------------------
  * State

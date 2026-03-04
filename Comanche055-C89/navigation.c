@@ -10,6 +10,7 @@
 #include <string.h>
 #include "navigation.h"
 #include "agc_cpu.h"
+#include "agc_math.h"
 #include "pinball.h"
 
 /* ----------------------------------------------------------------
@@ -73,7 +74,7 @@ void nav_init(void)
  * Eccentricity from angular momentum: e^2 = 1 - h^2/(mu*a)
  */
 
-void nav_compute_orbit(const agc_state_vector_t *sv,
+static void nav_compute_orbit(const agc_state_vector_t *sv,
                        long *apogee_km, long *perigee_km,
                        long *period_sec)
 {

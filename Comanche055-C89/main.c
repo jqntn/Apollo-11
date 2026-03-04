@@ -20,20 +20,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "agc.h"
 #include "agc_cpu.h"
-#include "agc_math.h"
 #include "executive.h"
 #include "waitlist.h"
 #include "timer.h"
 #include "dsky.h"
 #include "pinball.h"
-#include "alarm.h"
 #include "service.h"
 #include "programs.h"
 #include "navigation.h"
 #include "terminal.h"
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "dsky_gui.h"
 #include "dsky_web.h"

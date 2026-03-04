@@ -13,8 +13,6 @@
 
 #include "agc.h"
 
-extern int t4rupt_phase;
-
 void timer_init(void);
 void timer_tick(void);
 

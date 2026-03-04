@@ -14,7 +14,7 @@
  * P00: CMC Idling
  * ---------------------------------------------------------------- */
 
-void program_p00(void)
+static void program_p00(void)
 {
     pinball_show_prog(0);
     agc_current_program = 0;
@@ -25,7 +25,7 @@ void program_p00(void)
  * Stub for unimplemented programs
  * ---------------------------------------------------------------- */
 
-void program_stub(int prognum)
+static void program_stub(int prognum)
 {
     pinball_show_prog(prognum);
     alarm_set(00115);

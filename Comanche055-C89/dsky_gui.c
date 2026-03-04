@@ -12,14 +12,14 @@
 
 #ifdef _WIN32
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <string.h>
 #include <stdlib.h>
 #include "dsky.h"
 #include "dsky_gui.h"
+#include "pinball.h"
 #include "agc_cpu.h"
-
-extern void pinball_keypress(int keycode);
 
 #define REF_W  400
 #define REF_H  650
@@ -109,13 +109,13 @@ static void draw_seg(HDC dc, int x, int y, int digit)
     int hw = g_seg_w - 2*g_seg_t;
     int hh = (g_seg_h - 3*g_seg_t) / 2;
     s = (digit>=0 && digit<=9) ? seg_tab[digit] : 0;
-    frect(dc, x+g_seg_t, y,                           hw, g_seg_t, (s&SA)?on:off);
-    frect(dc, x+g_seg_w-g_seg_t, y+g_seg_t,          g_seg_t, hh, (s&SB)?on:off);
+    frect(dc, x+g_seg_t, y, hw, g_seg_t, (s&SA)?on:off);
+    frect(dc, x+g_seg_w-g_seg_t, y+g_seg_t, g_seg_t, hh, (s&SB)?on:off);
     frect(dc, x+g_seg_w-g_seg_t, y+g_seg_t+hh+g_seg_t, g_seg_t, hh, (s&SC)?on:off);
-    frect(dc, x+g_seg_t, y+g_seg_h-g_seg_t,          hw, g_seg_t, (s&SD)?on:off);
-    frect(dc, x, y+g_seg_t+hh+g_seg_t,               g_seg_t, hh, (s&SE)?on:off);
-    frect(dc, x, y+g_seg_t,                           g_seg_t, hh, (s&SF)?on:off);
-    frect(dc, x+g_seg_t, y+g_seg_t+hh,               hw, g_seg_t, (s&SG)?on:off);
+    frect(dc, x+g_seg_t, y+g_seg_h-g_seg_t, hw, g_seg_t, (s&SD)?on:off);
+    frect(dc, x, y+g_seg_t+hh+g_seg_t, g_seg_t, hh, (s&SE)?on:off);
+    frect(dc, x, y+g_seg_t, g_seg_t, hh, (s&SF)?on:off);
+    frect(dc, x+g_seg_t, y+g_seg_t+hh, hw, g_seg_t, (s&SG)?on:off);
 }
 
 static void draw_sign(HDC dc, int x, int y, int sign)
@@ -170,18 +170,18 @@ static void paint_dc(HDC dc)
     frect(dc, 0, 0, S(REF_W), S(REF_H), COL_PANEL);
 
     /* Status lights: 4 rows x 3 cols */
-    draw_light(dc, S(20),S(12),S(108),S(26), dsky_display.light_uplink_acty,"UPLINK ACTY");
-    draw_light(dc, S(140),S(12),S(108),S(26),dsky_display.light_temp,       "TEMP");
-    draw_light(dc, S(260),S(12),S(108),S(26),dsky_display.light_prog_alarm, "PROG");
-    draw_light(dc, S(20),S(44),S(108),S(26), dsky_display.light_gimbal_lock,"GIMBAL LOCK");
-    draw_light(dc, S(140),S(44),S(108),S(26),dsky_display.light_stby,       "STBY");
-    draw_light(dc, S(260),S(44),S(108),S(26),dsky_display.light_restart,    "RESTART");
-    draw_light(dc, S(20),S(76),S(108),S(26), dsky_display.light_no_att,     "NO ATT");
-    draw_light(dc, S(140),S(76),S(108),S(26),dsky_display.light_key_rel,    "KEY REL");
-    draw_light(dc, S(260),S(76),S(108),S(26),dsky_display.light_tracker,    "TRACKER");
-    draw_light(dc, S(20),S(108),S(108),S(26),dsky_display.light_opr_err,    "OPR ERR");
-    draw_light(dc, S(140),S(108),S(108),S(26),dsky_display.light_vel,       "VEL");
-    draw_light(dc, S(260),S(108),S(108),S(26),dsky_display.light_alt,       "ALT");
+    draw_light(dc, S(20), S(12), S(108), S(26), dsky_display.light_uplink_acty, "UPLINK ACTY");
+    draw_light(dc, S(140), S(12), S(108), S(26), dsky_display.light_temp, "TEMP");
+    draw_light(dc, S(260), S(12), S(108), S(26), dsky_display.light_prog_alarm, "PROG");
+    draw_light(dc, S(20), S(44), S(108), S(26), dsky_display.light_gimbal_lock, "GIMBAL LOCK");
+    draw_light(dc, S(140), S(44), S(108), S(26), dsky_display.light_stby, "STBY");
+    draw_light(dc, S(260), S(44), S(108), S(26), dsky_display.light_restart, "RESTART");
+    draw_light(dc, S(20), S(76), S(108), S(26), dsky_display.light_no_att, "NO ATT");
+    draw_light(dc, S(140), S(76), S(108), S(26), dsky_display.light_key_rel, "KEY REL");
+    draw_light(dc, S(260), S(76), S(108), S(26), dsky_display.light_tracker, "TRACKER");
+    draw_light(dc, S(20), S(108), S(108), S(26), dsky_display.light_opr_err, "OPR ERR");
+    draw_light(dc, S(140), S(108), S(108), S(26), dsky_display.light_vel, "VEL");
+    draw_light(dc, S(260), S(108), S(108), S(26), dsky_display.light_alt, "ALT");
 
     /* Display area */
     frect(dc, S(15), S(148), S(368), S(240), COL_DISP_BG);

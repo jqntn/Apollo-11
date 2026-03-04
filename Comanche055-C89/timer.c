@@ -6,15 +6,14 @@
 
 #include "timer.h"
 #include "agc_cpu.h"
+#include "dsky.h"
 #include "waitlist.h"
-
-extern void dsky_t4rupt(void);
 
 /* ----------------------------------------------------------------
  * State
  * ---------------------------------------------------------------- */
 
-int t4rupt_phase = 0;
+static int t4rupt_phase = 0;
 
 static int cs_accumulator = 0;
 static int t3_counter = 1;

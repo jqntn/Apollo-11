@@ -15,7 +15,6 @@
 #define NAVIGATION_H
 
 #include "agc.h"
-#include "agc_math.h"
 
 typedef struct {
     agc_word_t r[6];    /* Position vector (DP words) */
@@ -31,8 +30,5 @@ extern agc_state_vector_t nav_lem_state;
 
 void nav_init(void);
 void program_r30_v82(void);
-void nav_compute_orbit(const agc_state_vector_t *sv,
-                       long *apogee_km, long *perigee_km,
-                       long *period_sec);
 
 #endif /* NAVIGATION_H */

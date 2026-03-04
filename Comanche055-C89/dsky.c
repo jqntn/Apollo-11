@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dsky.h"
+#include "pinball.h"
 #include "terminal.h"
 #include "agc_cpu.h"
 #include "alarm.h"
@@ -19,6 +20,7 @@
 #ifdef _WIN32
 
 #include <conio.h>
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 int hal_kbhit(void) { return _kbhit(); }
@@ -96,8 +98,6 @@ dsky_display_t dsky_display;
 
 static dsky_display_t dsky_prev;
 static int dsky_needs_redraw = 1;
-
-extern void pinball_keypress(int keycode);
 
 /* ----------------------------------------------------------------
  * Init
@@ -312,7 +312,7 @@ void dsky_t4rupt(void)
     dsky_display.light_opr_err     = (ch11 & BIT12) ? 1 : 0;
 }
 
-void dsky_set_comp_acty(int on)
+static void dsky_set_comp_acty(int on)
 {
     if (on)
         agc_channels[CHAN_DSALMOUT] |= BIT1;
