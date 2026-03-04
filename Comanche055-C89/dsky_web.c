@@ -915,7 +915,7 @@ static void web_init_server(void)
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(WEB_PORT);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(web_listen_sock, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
         fprintf(stderr, "Web backend init failed: bind error %d\n", WSAGetLastError());
