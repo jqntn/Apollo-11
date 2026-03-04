@@ -1,21 +1,22 @@
+/*
+ * main.c -- Entry point, backend selection, main loop.
+ *
+ * Apollo 11 Command Module Guidance Computer
+ * Colossus 2A / Comanche 055
+ *
+ * Presents a menu to select the display backend (console, Win32
+ * GDI, or HTTP/SSE web), initializes all AGC subsystems, and runs
+ * the 100 Hz main loop: timer tick, job dispatch, display refresh,
+ * input poll.
+ *
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
+ */
+
 #ifdef _WIN32
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
-
-/*
- * main.c -- Entry point, main loop, timing
- *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- *
- * Apollo 11 Command Module Guidance Computer
- * Colossus 2A / Comanche 055
- *
- * This is a faithful C89 port of the AGC flight software.
- * Supports both an ANSI console backend and a Win32 graphical backend.
- * The user selects the display mode at startup.
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,10 @@
 #include "dsky_web.h"
 #endif
 
+/* ----------------------------------------------------------------
+ * Backend selection menu
+ * ---------------------------------------------------------------- */
+
 typedef struct {
     const char *label;
     dsky_backend_t *backend;
@@ -48,8 +53,6 @@ typedef struct {
 #define MENU_KEY_DOWN   2
 #define MENU_KEY_ENTER  3
 #define MENU_KEY_SELECT 4
-
-/* Remove unused menu_clear_screen function - replaced by shared terminal module */
 
 static int menu_read_key(int *selected_index)
 {
@@ -77,39 +80,33 @@ static int menu_read_key(int *selected_index)
 #ifdef _WIN32
     if (ch == 0 || ch == 224) {
         next = hal_getch();
-        if (next == 72)
-            return MENU_KEY_UP;
-        if (next == 80)
-            return MENU_KEY_DOWN;
+        if (next == 72) return MENU_KEY_UP;
+        if (next == 80) return MENU_KEY_DOWN;
     }
 #else
     if (ch == 27) {
         next = hal_getch();
-        if (next != '[')
-            return MENU_KEY_NONE;
+        if (next != '[') return MENU_KEY_NONE;
         third = hal_getch();
-        if (third == 'A')
-            return MENU_KEY_UP;
-        if (third == 'B')
-            return MENU_KEY_DOWN;
+        if (third == 'A') return MENU_KEY_UP;
+        if (third == 'B') return MENU_KEY_DOWN;
     }
 #endif
 
     return MENU_KEY_NONE;
 }
 
-static void menu_render(const backend_option_t *options, int count, int selected)
+static void menu_render(const backend_option_t *options, int count,
+                        int selected)
 {
     int i;
     static int prev_selected = -1;
     static int first_render = 1;
     char line_buffer[256];
-    
+
     if (first_render) {
-        /* Initialize cross-platform terminal */
         term_init();
-        
-        /* Draw header */
+
         term_set_cursor(1, 0);
         printf("===========================================");
         term_set_cursor(2, 2);
@@ -120,37 +117,37 @@ static void menu_render(const backend_option_t *options, int count, int selected
         printf("ANSI C89 Port");
         term_set_cursor(5, 0);
         printf("===========================================");
-        
-        /* Draw instructions */
-        sprintf(line_buffer, "Select display mode (Up/Down + Enter, or 1-%d):", count);
+
+        sprintf(line_buffer,
+                "Select display mode (Up/Down + Enter, or 1-%d):",
+                count);
         term_set_cursor(7, 0);
         printf("%s", line_buffer);
 
-        /* Initial render of all menu items */
         for (i = 0; i < count; i++) {
-            sprintf(line_buffer, "%s [%d] %s", 
-                    (i == selected) ? ">" : " ", i + 1, options[i].label);
+            sprintf(line_buffer, "%s [%d] %s",
+                    (i == selected) ? ">" : " ", i + 1,
+                    options[i].label);
             term_set_cursor(9 + i, 0);
             printf("%s", line_buffer);
         }
-        
+
         fflush(stdout);
         first_render = 0;
         prev_selected = selected;
     } else if (selected != prev_selected) {
-        /* Only update the previously selected and currently selected lines */
         int menu_start_line = 9;
-        
-        /* Update previously selected line to unselected */
-        sprintf(line_buffer, "  [%d] %s", prev_selected + 1, options[prev_selected].label);
+
+        sprintf(line_buffer, "  [%d] %s",
+                prev_selected + 1, options[prev_selected].label);
         term_set_cursor(menu_start_line + prev_selected, 0);
         printf("%s", line_buffer);
-        
-        /* Update currently selected line to selected */
-        sprintf(line_buffer, "> [%d] %s", selected + 1, options[selected].label);
+
+        sprintf(line_buffer, "> [%d] %s",
+                selected + 1, options[selected].label);
         term_set_cursor(menu_start_line + selected, 0);
         printf("%s", line_buffer);
-        
+
         fflush(stdout);
         prev_selected = selected;
     }
@@ -191,15 +188,9 @@ static dsky_backend_t *select_backend_interactive(void)
 
         key = menu_read_key(&direct_index);
         if (key == MENU_KEY_UP) {
-            if (selected > 0) {
-                selected--;
-                needs_render = 1;
-            }
+            if (selected > 0) { selected--; needs_render = 1; }
         } else if (key == MENU_KEY_DOWN) {
-            if (selected < count - 1) {
-                selected++;
-                needs_render = 1;
-            }
+            if (selected < count - 1) { selected++; needs_render = 1; }
         } else if (key == MENU_KEY_ENTER) {
             break;
         } else if (key == MENU_KEY_SELECT) {
@@ -214,7 +205,6 @@ static dsky_backend_t *select_backend_interactive(void)
 
     hal_term_cleanup();
     term_cleanup();
-    /* Always clear screen when exiting menu for clean transition to DSKY */
     term_clear_screen();
     return options[selected].backend;
 }
@@ -235,59 +225,45 @@ static void maybe_open_web_ui(dsky_backend_t *backend)
 }
 #endif
 
+/* ----------------------------------------------------------------
+ * Main
+ * ---------------------------------------------------------------- */
+
 int main(void)
 {
     dsky_backend_t *backend;
 
-    /* Select display backend */
     backend = select_backend_interactive();
 
     printf("Initializing AGC...\n");
 
-    /* Initialize all subsystems */
     agc_init();
     exec_init();
     waitlist_init();
     timer_init();
     dsky_init();
     pinball_init();
-
-    /* Perform fresh start (DOFSTART) */
     fresh_start();
-
-    /* Initialize navigation state */
     nav_init();
 
-    /* Initialize display backend */
     backend->init();
 #ifdef _WIN32
     maybe_open_web_ui(backend);
 #endif
 
-    /* Force initial display */
     pinball_show_prog(0);
     pinball_show_verb(0);
     pinball_show_noun(0);
 
-    /* ---- Main loop: 100 Hz (10ms per tick) ---- */
+    /* Main loop: 100 Hz (10ms per tick) */
     while (1) {
-        /* Advance timers, fire interrupts (T3RUPT, T4RUPT) */
         timer_tick();
-
-        /* Run highest priority job (one quantum) */
         exec_run();
-
-        /* Refresh DSKY display */
         backend->update();
-
-        /* Check for input */
         backend->poll_input();
-
-        /* Sleep 10ms (~100 Hz cycle) */
         backend->sleep_ms(10);
     }
 
-    /* Not reached, but for completeness */
     backend->cleanup();
     return 0;
 }

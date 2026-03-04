@@ -1,7 +1,7 @@
 /*
- * dsky_web.h -- HTTP/SSE web backend for DSKY
+ * dsky_web.h -- HTTP/SSE web backend for DSKY (Windows only).
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #ifndef DSKY_WEB_H

@@ -1,15 +1,18 @@
+/*
+ * dsky_web.c -- Minimal HTTP/SSE web backend for DSKY.
+ *
+ * Serves a single-page app with live DSKY state via Server-Sent
+ * Events and accepts key input via POST /key.  Windows only
+ * (non-blocking Winsock).  Non-Windows builds compile to a stub.
+ *
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
+ */
+
 #ifdef _WIN32
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
-
-/*
- * dsky_web.c -- Minimal HTTP/SSE web backend for DSKY
- *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Windows-first implementation using non-blocking Winsock.
- */
 
 #include "dsky_web.h"
 

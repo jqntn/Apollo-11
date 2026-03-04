@@ -1,19 +1,14 @@
 /*
- * terminal.c -- Cross-platform terminal UI utilities implementation
+ * terminal.c -- Cross-platform terminal UI utilities.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Provides flicker-free terminal rendering across Windows, Linux, and macOS
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
 #include "terminal.h"
 
 void term_init(void)
 {
-    /* Enable alternate screen buffer and hide cursor */
     printf(ANSI_ALT_BUFFER_ON);
     printf(ANSI_HIDE_CURSOR);
     fflush(stdout);
@@ -21,7 +16,6 @@ void term_init(void)
 
 void term_cleanup(void)
 {
-    /* Show cursor and restore original screen buffer */
     printf(ANSI_SHOW_CURSOR);
     printf(ANSI_ALT_BUFFER_OFF);
     fflush(stdout);

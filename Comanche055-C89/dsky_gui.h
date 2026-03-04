@@ -1,7 +1,7 @@
 /*
- * dsky_gui.h -- Win32 GDI graphical DSKY backend
+ * dsky_gui.h -- Win32 GDI graphical backend for DSKY.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #ifndef DSKY_GUI_H

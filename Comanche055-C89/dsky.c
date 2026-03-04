@@ -1,8 +1,7 @@
 /*
- * dsky.c -- Console DSKY HAL: ASCII rendering + keyboard input
+ * dsky.c -- Console DSKY backend: ASCII rendering + keyboard input.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Renders the DSKY as ASCII art, maps keyboard to AGC key codes.
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #include <stdio.h>
@@ -95,11 +94,9 @@ void hal_sleep_ms(int ms)
 
 dsky_display_t dsky_display;
 
-/* Previous display state for dirty-checking (avoid flicker) */
 static dsky_display_t dsky_prev;
 static int dsky_needs_redraw = 1;
 
-/* Forward declaration */
 extern void pinball_keypress(int keycode);
 
 /* ----------------------------------------------------------------
@@ -112,7 +109,6 @@ void dsky_init(void)
     memset(&dsky_display, 0, sizeof(dsky_display));
     memset(&dsky_prev, 0, sizeof(dsky_prev));
 
-    /* Blank all digits */
     dsky_display.prog[0] = -1; dsky_display.prog[1] = -1;
     dsky_display.verb[0] = -1; dsky_display.verb[1] = -1;
     dsky_display.noun[0] = -1; dsky_display.noun[1] = -1;
@@ -170,12 +166,10 @@ static void light_str(char *buf, int on, const char *name)
 static void dsky_render(void)
 {
     static int first_render = 1;
-    
+
     if (first_render) {
-        /* First render: clear screen and draw complete layout */
         term_clear_screen();
-        
-        /* Draw complete DSKY layout - menu already cleared screen */
+
         printf("+------------- DSKY -------------+\n");
         printf("|                                |\n");
         printf("|                                |\n");
@@ -196,11 +190,11 @@ static void dsky_render(void)
         printf("| Q=QUIT                         |\n");
         printf("|                                |\n");
         printf("+--------------------------------+\n");
-        
+
         first_render = 0;
     }
-    
-    /* Update status lights row 1 */
+
+    /* Status lights row 1 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_uplink_acty, "UPLINK");
@@ -210,7 +204,7 @@ static void dsky_render(void)
         printf(" %s %s %s  ", a, b, c);
     }
 
-    /* Update status lights row 2 */
+    /* Status lights row 2 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_gimbal_lock, "GIMBAL");
@@ -220,7 +214,7 @@ static void dsky_render(void)
         printf(" %s %s %s  ", a, b, c);
     }
 
-    /* Update status lights row 3 */
+    /* Status lights row 3 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_no_att, "NO ATT");
@@ -230,7 +224,7 @@ static void dsky_render(void)
         printf(" %s %s %s  ", a, b, c);
     }
 
-    /* Update status lights row 4 */
+    /* Status lights row 4 */
     {
         char a[12], b[12], c[12];
         light_str(a, dsky_display.light_opr_err, "OPR ER");
@@ -240,7 +234,7 @@ static void dsky_render(void)
         printf(" %s %s %s  ", a, b, c);
     }
 
-    /* COMP ACTY and PROG display */
+    /* COMP ACTY and PROG */
     term_set_cursor(8, 2);
     printf("  %s   PROG  %c%c          ",
            dsky_display.light_comp_acty ? "COMP ACTY" : "         ",
@@ -255,7 +249,7 @@ static void dsky_render(void)
            digit_char(dsky_display.noun[0]),
            digit_char(dsky_display.noun[1]));
 
-    /* R1 */
+    /* R1, R2, R3 */
     term_set_cursor(11, 2);
     printf("  R1   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r1_sign),
@@ -265,7 +259,6 @@ static void dsky_render(void)
            digit_char(dsky_display.r1[3]),
            digit_char(dsky_display.r1[4]));
 
-    /* R2 */
     term_set_cursor(12, 2);
     printf("  R2   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r2_sign),
@@ -275,7 +268,6 @@ static void dsky_render(void)
            digit_char(dsky_display.r2[3]),
            digit_char(dsky_display.r2[4]));
 
-    /* R3 */
     term_set_cursor(13, 2);
     printf("  R3   %s%c%c%c%c%c                   ",
            sign_str(dsky_display.r3_sign),
@@ -289,12 +281,11 @@ static void dsky_render(void)
 }
 
 /* ----------------------------------------------------------------
- * Update display (called from main loop)
+ * Update / T4RUPT / COMP ACTY / key submission
  * ---------------------------------------------------------------- */
 
 void dsky_update(void)
 {
-    /* Only redraw if display state changed */
     if (dsky_needs_redraw ||
         memcmp(&dsky_display, &dsky_prev, sizeof(dsky_display)) != 0) {
         dsky_render();
@@ -303,51 +294,32 @@ void dsky_update(void)
     }
 }
 
-/* ----------------------------------------------------------------
- * T4RUPT handler: scan display buffer
- * ----------------------------------------------------------------
- * In the real AGC, T4RUPT cycles through relay words to update
- * the DSKY's electroluminescent display. Here we update our
- * display struct from Pinball's state.
- */
-
 void dsky_t4rupt(void)
 {
-    /* Update status lights from channel 11 */
     agc_word_t ch11 = agc_channels[CHAN_DSALMOUT];
-    dsky_display.light_comp_acty    = (ch11 & BIT1) ? 1 : 0;
-    dsky_display.light_uplink_acty  = (ch11 & BIT2) ? 1 : 0;
-    dsky_display.light_temp         = (ch11 & BIT4) ? 1 : 0;
-    dsky_display.light_key_rel      = (ch11 & BIT5) ? 1 : 0;
-    dsky_display.light_vel          = (ch11 & BIT6) ? 1 : 0;
-    dsky_display.light_no_att       = (ch11 & BIT7) ? 1 : 0;
-    dsky_display.light_alt          = (ch11 & BIT8) ? 1 : 0;
-    dsky_display.light_gimbal_lock  = (ch11 & BIT9) ? 1 : 0;
-    dsky_display.light_tracker      = (ch11 & BIT10) ? 1 : 0;
-    dsky_display.light_prog_alarm   = (ch11 & BIT11) ? 1 : 0;
-    dsky_display.light_stby         = (ch11 & BIT13) ? 1 : 0;
-    dsky_display.light_restart      = (ch11 & BIT14) ? 1 : 0;
-    dsky_display.light_opr_err      = (ch11 & BIT12) ? 1 : 0;
+    dsky_display.light_comp_acty   = (ch11 & BIT1) ? 1 : 0;
+    dsky_display.light_uplink_acty = (ch11 & BIT2) ? 1 : 0;
+    dsky_display.light_temp        = (ch11 & BIT4) ? 1 : 0;
+    dsky_display.light_key_rel     = (ch11 & BIT5) ? 1 : 0;
+    dsky_display.light_vel         = (ch11 & BIT6) ? 1 : 0;
+    dsky_display.light_no_att      = (ch11 & BIT7) ? 1 : 0;
+    dsky_display.light_alt         = (ch11 & BIT8) ? 1 : 0;
+    dsky_display.light_gimbal_lock = (ch11 & BIT9) ? 1 : 0;
+    dsky_display.light_tracker     = (ch11 & BIT10) ? 1 : 0;
+    dsky_display.light_prog_alarm  = (ch11 & BIT11) ? 1 : 0;
+    dsky_display.light_stby        = (ch11 & BIT13) ? 1 : 0;
+    dsky_display.light_restart     = (ch11 & BIT14) ? 1 : 0;
+    dsky_display.light_opr_err     = (ch11 & BIT12) ? 1 : 0;
 }
-
-/* ----------------------------------------------------------------
- * COMP ACTY light control
- * ---------------------------------------------------------------- */
 
 void dsky_set_comp_acty(int on)
 {
-    if (on) {
+    if (on)
         agc_channels[CHAN_DSALMOUT] |= BIT1;
-    } else {
+    else
         agc_channels[CHAN_DSALMOUT] &= ~BIT1;
-    }
     dsky_display.light_comp_acty = on;
 }
-
-/* ----------------------------------------------------------------
- * Shared key submission helper
- * ----------------------------------------------------------------
- */
 
 void dsky_submit_key(int keycode)
 {
@@ -355,9 +327,7 @@ void dsky_submit_key(int keycode)
         pinball_keypress(-1);
         return;
     }
-
     if (keycode >= 0) {
-        /* Write key code to channel 15 and raise KEYRUPT */
         agc_channels[CHAN_MNKEYIN] = (agc_word_t)keycode;
         pinball_keypress(keycode);
     }
@@ -365,9 +335,7 @@ void dsky_submit_key(int keycode)
 
 /* ----------------------------------------------------------------
  * Poll keyboard input
- * ----------------------------------------------------------------
- * Maps console keys to AGC DSKY key codes and forwards to Pinball.
- */
+ * ---------------------------------------------------------------- */
 
 void dsky_poll_input(void)
 {
@@ -378,55 +346,54 @@ void dsky_poll_input(void)
     keycode = -2;
 
     switch (ch) {
-        case '0': keycode = DSKY_KEY_0; break;
-        case '1': keycode = DSKY_KEY_1; break;
-        case '2': keycode = DSKY_KEY_2; break;
-        case '3': keycode = DSKY_KEY_3; break;
-        case '4': keycode = DSKY_KEY_4; break;
-        case '5': keycode = DSKY_KEY_5; break;
-        case '6': keycode = DSKY_KEY_6; break;
-        case '7': keycode = DSKY_KEY_7; break;
-        case '8': keycode = DSKY_KEY_8; break;
-        case '9': keycode = DSKY_KEY_9; break;
-        case 'v': case 'V': keycode = DSKY_KEY_VERB; break;
-        case 'n': case 'N': keycode = DSKY_KEY_NOUN; break;
-        case '+': case '=': keycode = DSKY_KEY_PLUS; break;
-        case '-': case '_': keycode = DSKY_KEY_MINUS; break;
-        case 'e': case 'E': case '\r': case '\n':
-            keycode = DSKY_KEY_ENTR; break;
-        case 'c': case 'C': keycode = DSKY_KEY_CLR; break;
-        case 'p': case 'P': keycode = DSKY_KEY_PRO; break;
-        case 'k': case 'K': keycode = DSKY_KEY_KREL; break;
-        case 'r': case 'R': keycode = DSKY_KEY_RSET; break;
-        case 'q': case 'Q':
-            hal_term_cleanup();
-            term_clear_screen();  /* Full screen clear before exit */
-            printf("Comanche055 terminated.\n");
-            exit(0);
-            break;
-        default:
-            break;
+    case '0': keycode = DSKY_KEY_0; break;
+    case '1': keycode = DSKY_KEY_1; break;
+    case '2': keycode = DSKY_KEY_2; break;
+    case '3': keycode = DSKY_KEY_3; break;
+    case '4': keycode = DSKY_KEY_4; break;
+    case '5': keycode = DSKY_KEY_5; break;
+    case '6': keycode = DSKY_KEY_6; break;
+    case '7': keycode = DSKY_KEY_7; break;
+    case '8': keycode = DSKY_KEY_8; break;
+    case '9': keycode = DSKY_KEY_9; break;
+    case 'v': case 'V': keycode = DSKY_KEY_VERB; break;
+    case 'n': case 'N': keycode = DSKY_KEY_NOUN; break;
+    case '+': case '=': keycode = DSKY_KEY_PLUS; break;
+    case '-': case '_': keycode = DSKY_KEY_MINUS; break;
+    case 'e': case 'E': case '\r': case '\n':
+        keycode = DSKY_KEY_ENTR; break;
+    case 'c': case 'C': keycode = DSKY_KEY_CLR; break;
+    case 'p': case 'P': keycode = DSKY_KEY_PRO; break;
+    case 'k': case 'K': keycode = DSKY_KEY_KREL; break;
+    case 'r': case 'R': keycode = DSKY_KEY_RSET; break;
+    case 'q': case 'Q':
+        hal_term_cleanup();
+        term_clear_screen();
+        printf("Comanche055 terminated.\n");
+        exit(0);
+        break;
+    default:
+        break;
     }
 
-    if (keycode != -2) {
+    if (keycode != -2)
         dsky_submit_key(keycode);
-    }
 }
 
 /* ----------------------------------------------------------------
  * Console backend struct
  * ---------------------------------------------------------------- */
 
-static void console_be_init(void)    
-{ 
-    hal_term_init(); 
-    term_init();  /* Initialize shared terminal system */
+static void console_be_init(void)
+{
+    hal_term_init();
+    term_init();
 }
 
-static void console_be_cleanup(void) 
-{ 
-    term_cleanup();  /* Cleanup shared terminal system */
-    hal_term_cleanup(); 
+static void console_be_cleanup(void)
+{
+    term_cleanup();
+    hal_term_cleanup();
 }
 
 dsky_backend_t dsky_console_backend = {

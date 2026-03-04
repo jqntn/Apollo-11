@@ -1,8 +1,15 @@
 /*
- * dsky.h -- Console DSKY HAL: ASCII rendering + keyboard input
+ * dsky.h -- DSKY display abstraction and console backend.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Renders the DSKY display as ASCII art in the console terminal.
+ * Defines the DSKY display state (lights, digits, registers),
+ * key codes matching AGC channel 15 encoding, the platform HAL
+ * for keyboard input, and the console backend that renders the
+ * DSKY as ASCII art via ANSI terminal escape codes.
+ *
+ * Maps to T4RUPT_PROGRAM.agc (display scan) and
+ * KEYRUPT_UPRUPT.agc (keyboard input).
+ *
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #ifndef DSKY_H
@@ -15,7 +22,6 @@
  * DSKY display state
  * ---------------------------------------------------------------- */
 
-/* DSKY digit positions (5 digits per register, 2 per verb/noun/prog) */
 typedef struct {
     /* Status lights (1 = on, 0 = off) */
     int light_uplink_acty;
@@ -32,10 +38,10 @@ typedef struct {
     int light_opr_err;
     int light_comp_acty;
 
-    /* Digit displays (each is 0-9 or -1 for blank) */
-    int prog[2];    /* Program number digits */
-    int verb[2];    /* Verb digits */
-    int noun[2];    /* Noun digits */
+    /* Digit displays (0-9 or -1 for blank) */
+    int prog[2];
+    int verb[2];
+    int noun[2];
 
     /* R1, R2, R3: sign + 5 digits each */
     int r1_sign;    /* 0=blank, 1=plus, -1=minus */
@@ -48,7 +54,7 @@ typedef struct {
 
 extern dsky_display_t dsky_display;
 
-/* DSKY key codes (matching AGC channel 15 encoding) */
+/* DSKY key codes (AGC channel 15 encoding) */
 #define DSKY_KEY_0      020
 #define DSKY_KEY_1      001
 #define DSKY_KEY_2      002
@@ -65,7 +71,7 @@ extern dsky_display_t dsky_display;
 #define DSKY_KEY_MINUS  033
 #define DSKY_KEY_ENTR   034
 #define DSKY_KEY_CLR    036
-#define DSKY_KEY_PRO    -1   /* PRO handled separately */
+#define DSKY_KEY_PRO    -1
 #define DSKY_KEY_KREL   031
 #define DSKY_KEY_RSET   022
 
@@ -73,42 +79,23 @@ extern dsky_display_t dsky_display;
  * DSKY API
  * ---------------------------------------------------------------- */
 
-/* Initialize DSKY display */
 void dsky_init(void);
-
-/* Update console display (called from main loop) */
 void dsky_update(void);
-
-/* Poll for keyboard input (called from main loop) */
 void dsky_poll_input(void);
-
-/* Submit a DSKY keycode to Pinball (shared by all backends) */
 void dsky_submit_key(int keycode);
-
-/* T4RUPT handler: scan DSKY display buffer */
 void dsky_t4rupt(void);
-
-/* Set COMP ACTY light */
 void dsky_set_comp_acty(int on);
 
 /* ----------------------------------------------------------------
- * Platform HAL for keyboard input
+ * Platform HAL
  * ---------------------------------------------------------------- */
 
-/* Non-blocking keyboard check: returns non-zero if key available */
 int hal_kbhit(void);
-
-/* Get a character without echo or waiting for Enter */
 int hal_getch(void);
-
-/* Platform-specific terminal setup/cleanup */
 void hal_term_init(void);
 void hal_term_cleanup(void);
-
-/* Sleep for milliseconds */
 void hal_sleep_ms(int ms);
 
-/* Console backend (ANSI terminal) */
 extern dsky_backend_t dsky_console_backend;
 
 #endif /* DSKY_H */

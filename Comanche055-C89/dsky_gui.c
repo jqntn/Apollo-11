@@ -1,8 +1,11 @@
 /*
- * dsky_gui.c -- Win32 GDI graphical DSKY backend
+ * dsky_gui.c -- Win32 GDI graphical DSKY backend.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Renders the DSKY as a graphical window using native Win32 GDI.
+ * Renders the DSKY as a graphical window with 7-segment displays,
+ * status lights, and clickable buttons using native Win32 GDI.
+ * Non-Windows builds compile to a disabled stub.
+ *
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #include "dsky_backend.h"

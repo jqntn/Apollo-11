@@ -1,12 +1,7 @@
 /*
- * executive.c -- Priority-based cooperative job scheduler
+ * executive.c -- Priority-based cooperative job scheduler.
  *
- * Comanche055 (Apollo 11 CM) ANSI C89 port
- * Faithful reproduction of the AGC Executive (7 core sets)
- *
- * The Executive manages up to 7 concurrent jobs. Each job has a priority;
- * the highest-priority ready job runs until it voluntarily yields
- * (ENDOFJOB, CHANGEJOB, JOBSLEEP). This is cooperative multitasking.
+ * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
 #include <string.h>
@@ -21,10 +16,7 @@ agc_coreset_t agc_coresets[NUM_CORE_SETS];
 int agc_current_job = -1;
 int agc_newjob = 0;
 
-/* VAC area allocation flags (1 = in use) */
 static int vac_inuse[NUM_VAC_AREAS];
-
-/* Flag: set to 1 when exec_endofjob is called inside a job */
 static volatile int job_ended;
 
 /* ----------------------------------------------------------------
@@ -36,32 +28,26 @@ void exec_init(void)
     int i;
     memset(agc_coresets, 0, sizeof(agc_coresets));
     memset(vac_inuse, 0, sizeof(vac_inuse));
-    for (i = 0; i < NUM_CORE_SETS; i++) {
+    for (i = 0; i < NUM_CORE_SETS; i++)
         agc_coresets[i].vac_index = -1;
-    }
     agc_current_job = -1;
     agc_newjob = 0;
     job_ended = 0;
 }
 
 /* ----------------------------------------------------------------
- * Find free core set
+ * Internal helpers
  * ---------------------------------------------------------------- */
 
 static int find_free_coreset(void)
 {
     int i;
     for (i = 0; i < NUM_CORE_SETS; i++) {
-        if (agc_coresets[i].priority == 0 && agc_coresets[i].entry == NULL) {
+        if (agc_coresets[i].priority == 0 && agc_coresets[i].entry == NULL)
             return i;
-        }
     }
     return -1;
 }
-
-/* ----------------------------------------------------------------
- * Find free VAC area
- * ---------------------------------------------------------------- */
 
 static int find_free_vac(void)
 {
@@ -75,17 +61,14 @@ static int find_free_vac(void)
     return -1;
 }
 
-/* ----------------------------------------------------------------
- * Find highest priority ready job
- * ---------------------------------------------------------------- */
-
 static int find_highest_priority(void)
 {
     int best = -1;
     int best_prio = 0;
     int i;
     for (i = 0; i < NUM_CORE_SETS; i++) {
-        if (agc_coresets[i].priority > best_prio && agc_coresets[i].entry != NULL) {
+        if (agc_coresets[i].priority > best_prio &&
+            agc_coresets[i].entry != NULL) {
             best_prio = agc_coresets[i].priority;
             best = i;
         }
@@ -94,7 +77,7 @@ static int find_highest_priority(void)
 }
 
 /* ----------------------------------------------------------------
- * Schedule a basic job (NOVAC)
+ * NOVAC / FINDVAC
  * ---------------------------------------------------------------- */
 
 int exec_novac(int priority, agc_jobfunc_t entry)
@@ -106,18 +89,12 @@ int exec_novac(int priority, agc_jobfunc_t entry)
     agc_coresets[slot].entry = entry;
     agc_coresets[slot].vac_index = -1;
 
-    /* Check if this new job is higher priority than current */
     if (agc_current_job >= 0 &&
         priority > agc_coresets[agc_current_job].priority) {
         agc_newjob = 1;
     }
-
     return slot;
 }
-
-/* ----------------------------------------------------------------
- * Schedule an interpretive job (FINDVAC)
- * ---------------------------------------------------------------- */
 
 int exec_findvac(int priority, agc_jobfunc_t entry)
 {
@@ -126,9 +103,7 @@ int exec_findvac(int priority, agc_jobfunc_t entry)
     if (slot < 0) return -1;
 
     vac = find_free_vac();
-    if (vac < 0) {
-        return -1;
-    }
+    if (vac < 0) return -1;
 
     agc_coresets[slot].priority = priority;
     agc_coresets[slot].entry = entry;
@@ -138,22 +113,18 @@ int exec_findvac(int priority, agc_jobfunc_t entry)
         priority > agc_coresets[agc_current_job].priority) {
         agc_newjob = 1;
     }
-
     return slot;
 }
 
 /* ----------------------------------------------------------------
- * End current job (ENDOFJOB)
+ * ENDOFJOB / CHANGEJOB / JOBSLEEP / JOBWAKE
  * ---------------------------------------------------------------- */
 
 void exec_endofjob(void)
 {
     if (agc_current_job >= 0) {
-        /* Free VAC area if allocated */
-        if (agc_coresets[agc_current_job].vac_index >= 0) {
+        if (agc_coresets[agc_current_job].vac_index >= 0)
             vac_inuse[agc_coresets[agc_current_job].vac_index] = 0;
-        }
-        /* Clear the core set */
         agc_coresets[agc_current_job].priority = 0;
         agc_coresets[agc_current_job].entry = NULL;
         agc_coresets[agc_current_job].vac_index = -1;
@@ -162,44 +133,26 @@ void exec_endofjob(void)
     job_ended = 1;
 }
 
-/* ----------------------------------------------------------------
- * Change to highest priority job (CHANG1/CHANG2)
- * ---------------------------------------------------------------- */
-
 void exec_changejob(void)
 {
     agc_newjob = 0;
-    /* The main loop (exec_run) will pick the highest priority next */
     job_ended = 1;
 }
-
-/* ----------------------------------------------------------------
- * Job sleep (JOBSLEEP)
- * ---------------------------------------------------------------- */
 
 void exec_jobsleep(void)
 {
-    if (agc_current_job >= 0) {
-        /* Negate priority to mark as sleeping */
+    if (agc_current_job >= 0)
         agc_coresets[agc_current_job].priority =
             -agc_coresets[agc_current_job].priority;
-    }
     job_ended = 1;
 }
-
-/* ----------------------------------------------------------------
- * Job wake (JOBWAKE)
- * ---------------------------------------------------------------- */
 
 void exec_jobwake(int coreset_index)
 {
     if (coreset_index < 0 || coreset_index >= NUM_CORE_SETS) return;
     if (agc_coresets[coreset_index].priority < 0) {
-        /* Restore positive priority */
         agc_coresets[coreset_index].priority =
             -agc_coresets[coreset_index].priority;
-
-        /* Check if woken job is higher priority than current */
         if (agc_current_job >= 0 &&
             agc_coresets[coreset_index].priority >
             agc_coresets[agc_current_job].priority) {
@@ -217,7 +170,6 @@ int exec_run(void)
     int best = find_highest_priority();
 
     if (best < 0) {
-        /* No ready jobs: idle (DUMMYJOB equivalent) */
         agc_current_job = -1;
         return 0;
     }
@@ -226,15 +178,12 @@ int exec_run(void)
     agc_newjob = 0;
     job_ended = 0;
 
-    /* Dispatch the job */
-    if (agc_coresets[best].entry != NULL) {
+    if (agc_coresets[best].entry != NULL)
         agc_coresets[best].entry();
-    }
 
-    /* If the job didn't call endofjob/changejob/sleep, auto-end it */
-    if (!job_ended && agc_current_job == best) {
+    /* Auto-end if the job didn't yield explicitly */
+    if (!job_ended && agc_current_job == best)
         exec_endofjob();
-    }
 
     return 1;
 }
