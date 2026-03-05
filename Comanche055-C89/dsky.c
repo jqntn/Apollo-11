@@ -4,6 +4,11 @@
  * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
 
+/* Keep GNU libc from hiding POSIX extensions (like clock_gettime) in strict C89 mode */
+#if defined(__linux__) || defined(__unix__) || defined(__posix__)
+#define _POSIX_C_SOURCE 199309L
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
