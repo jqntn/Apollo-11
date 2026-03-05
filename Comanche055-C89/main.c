@@ -24,6 +24,8 @@
 int main(int argc, char *argv[])
 {
     dsky_backend_t *backend;
+    long last_time;
+    int accumulated_ms;
 
     backend = args_parse_backend(argc, argv);
     if (!backend)
@@ -37,19 +39,18 @@ int main(int argc, char *argv[])
 
     backend->init();
 
-    long last_time = hal_time_ms();
-    int accumulated_ms = 0;
+    last_time = hal_time_ms();
+    accumulated_ms = 0;
 
-    /* Main loop: 100 Hz */
+    /* Main loop: 100 Hz (10ms per tick) */
     while (1) {
         long current_time = hal_time_ms();
         int elapsed = (int)(current_time - last_time);
         last_time = current_time;
 
         accumulated_ms += elapsed;
-        if (accumulated_ms > 500) accumulated_ms = 500; /* Cap catch-up */
+        if (accumulated_ms > 500) accumulated_ms = 500;
 
-        /* Tick AGC simulation */
         while (accumulated_ms >= 10) {
             timer_tick();
             exec_run();
