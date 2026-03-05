@@ -101,147 +101,150 @@ static int web_key_head = 0;
 static int web_key_tail = 0;
 static int web_key_count = 0;
 
-static const char web_index_html[] =
-"<!doctype html>\n"
-"<html lang='en'>\n"
-"<head>\n"
-"<meta charset='utf-8'>\n"
-"<meta name='viewport' content='width=device-width,initial-scale=1'>\n"
-"<title>Comanche055 DSKY</title>\n"
-"<style>\n"
-"html{height:auto;}\n"
-"body{margin:0;padding:12px;background:#0b0b0b;color:#d4f7d4;font-family:Consolas,'Courier New',monospace;font-size:16px;line-height:1.45;box-sizing:border-box;}\n"
-".app{width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;}\n"
-"h1{margin:0 0 12px;text-align:center;font-size:30px;line-height:1.2;}\n"
-"#status{margin:0 0 12px;text-align:center;color:#9ad09a;font-size:18px;}\n"
-"pre{margin:0;background:#111;border:1px solid #2f2f2f;padding:16px;overflow:auto;font-size:22px;line-height:1.35;}\n"
-".keys{margin:14px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:560px;}\n"
-"button{width:104px;min-height:50px;padding:10px 6px;background:#202020;border:1px solid #3a3a3a;color:#e8ffe8;cursor:pointer;font-family:Consolas,'Courier New',monospace;font-size:18px;}\n"
-"button:active{background:#2a2a2a;}\n"
-".spacer{pointer-events:none;cursor:default;}\n"
-"</style>\n"
-"</head>\n"
-"<body>\n"
-"<div class='app'>\n"
-"<h1>COMANCHE 055 DSKY (Web)</h1>\n"
-"<div id='status'>Connecting...</div>\n"
-"<pre id='screen'>Waiting for state...</pre>\n"
-"<div class='keys' id='keys'></div>\n"
-"</div>\n"
-"<script>\n"
-"var KEY={\n"
-" VERB:17,NOUN:31,PLUS:26,MINUS:27,ENTR:28,CLR:30,KREL:25,RSET:18,PRO:-1,\n"
-" D0:16,D1:1,D2:2,D3:3,D4:4,D5:5,D6:6,D7:7,D8:8,D9:9\n"
-"};\n"
-"var CAN_FETCH=(typeof window.fetch==='function'&&window.JSON&&typeof JSON.stringify==='function');\n"
-"var CAN_SSE=(typeof window.EventSource==='function');\n"
-"var buttons=[\n"
-" ['VERB',KEY.VERB],['NOUN',KEY.NOUN],['ENTR',KEY.ENTR],['CLR',KEY.CLR],['RSET',KEY.RSET],\n"
-" ['+',KEY.PLUS],['-',KEY.MINUS],['PRO',KEY.PRO],['KREL',KEY.KREL],['',null],\n"
-" ['7',KEY.D7],['8',KEY.D8],['9',KEY.D9],['4',KEY.D4],['5',KEY.D5],\n"
-" ['6',KEY.D6],['1',KEY.D1],['2',KEY.D2],['3',KEY.D3],['0',KEY.D0]\n"
-"];\n"
-"function setStatus(t){document.getElementById('status').textContent=t;}\n"
-"function d(n){return (n>=0&&n<=9)?String(n):' ';}\n"
-"function sgn(n){return n>0?'+':(n<0?'-':' ');} \n"
-"var LIGHT_ROWS=[\n"
-" [['uplink_acty','UPLINK ACTY'],['temp','TEMP'],['prog_alarm','PROG']],\n"
-" [['gimbal_lock','GIMBAL LOCK'],['stby','STBY'],['restart','RESTART']],\n"
-" [['no_att','NO ATT'],['key_rel','KEY REL'],['tracker','TRACKER']],\n"
-" [['opr_err','OPR ERR'],['vel','VEL'],['alt','ALT']]\n"
-"];\n"
-"function padRight(s,w){while(s.length<w)s+=' ';return s;}\n"
-"function lightCell(on,label){return '['+(on?'X':' ')+'] '+label;}\n"
-"function lightsBlock(l){\n"
-" var rows=LIGHT_ROWS;\n"
-" var i;\n"
-" var j;\n"
-" var out='LIGHTS:\\n';\n"
-" var colw=18;\n"
-" for(i=0;i<rows.length;i++){\n"
-"  for(j=0;j<rows[i].length;j++){\n"
-"   out+=padRight(lightCell(l[rows[i][j][0]]?1:0,rows[i][j][1]),colw);\n"
-"  }\n"
-"  out+='\\n';\n"
-" }\n"
-" out+=lightCell(l.comp_acty?1:0,'COMP ACTY')+'\\n';\n"
-" return out;\n"
-"}\n"
-"function reg(r){return sgn(r.sign)+d(r.digits[0])+d(r.digits[1])+d(r.digits[2])+d(r.digits[3])+d(r.digits[4]);}\n"
-"function render(st){\n"
-" var out=lightsBlock(st.lights);\n"
-" out+='PROG '+d(st.prog[0])+d(st.prog[1])+'  VERB '+d(st.verb[0])+d(st.verb[1])+'  NOUN '+d(st.noun[0])+d(st.noun[1])+'\\n';\n"
-" out+='R1 '+reg(st.r1)+'\\n';\n"
-" out+='R2 '+reg(st.r2)+'\\n';\n"
-" out+='R3 '+reg(st.r3)+'\\n';\n"
-" document.getElementById('screen').textContent=out;\n"
-"}\n"
-"function sendKey(code){\n"
-" if(!CAN_FETCH){setStatus('Input unsupported: fetch unavailable');return;}\n"
-" fetch('/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keycode:code})}).catch(function(){});\n"
-"}\n"
-"function keycodeFromEvent(ev){\n"
-" var k='';\n"
-" var code=ev.which||ev.keyCode||0;\n"
-" if(typeof ev.key==='string')k=ev.key;\n"
-" if(k){\n"
-"  if(k==='v'||k==='V')return KEY.VERB;\n"
-"  if(k==='n'||k==='N')return KEY.NOUN;\n"
-"  if(k==='e'||k==='E'||k==='Enter')return KEY.ENTR;\n"
-"  if(k==='c'||k==='C')return KEY.CLR;\n"
-"  if(k==='r'||k==='R')return KEY.RSET;\n"
-"  if(k==='k'||k==='K')return KEY.KREL;\n"
-"  if(k==='p'||k==='P')return KEY.PRO;\n"
-"  if(k==='+'||k==='=')return KEY.PLUS;\n"
-"  if(k==='-'||k==='_')return KEY.MINUS;\n"
-"  if(k>='0'&&k<='9')return (k==='0')?KEY.D0:(k.charCodeAt(0)-48);\n"
-" }\n"
-" if(code>=48&&code<=57)return (code==48)?KEY.D0:(code-48);\n"
-" if(code>=96&&code<=105)return (code==96)?KEY.D0:(code-96);\n"
-" switch(code){\n"
-"  case 13:return KEY.ENTR;\n"
-"  case 67:return KEY.CLR;\n"
-"  case 69:return KEY.ENTR;\n"
-"  case 75:return KEY.KREL;\n"
-"  case 78:return KEY.NOUN;\n"
-"  case 80:return KEY.PRO;\n"
-"  case 82:return KEY.RSET;\n"
-"  case 86:return KEY.VERB;\n"
-"  case 107:return KEY.PLUS;\n"
-"  case 109:return KEY.MINUS;\n"
-"  case 173:return KEY.MINUS;\n"
-"  case 187:return KEY.PLUS;\n"
-"  case 189:return KEY.MINUS;\n"
-" }\n"
-" return null;\n"
-"}\n"
-"(function(){\n"
-" var root=document.getElementById('keys');\n"
-" for(var i=0;i<buttons.length;i++){\n"
-"  var b=document.createElement('button');\n"
-"  if(buttons[i][1]===null){b.className='spacer';b.textContent=' ';b.tabIndex=-1;}\n"
-"  else{b.textContent=buttons[i][0];(function(code){b.onclick=function(){sendKey(code);};})(buttons[i][1]);}\n"
-"  root.appendChild(b);\n"
-" }\n"
-"})();\n"
-"document.addEventListener('keydown',function(ev){\n"
-" var kc=keycodeFromEvent(ev);\n"
-" if(kc!==null){sendKey(kc);if(ev.preventDefault)ev.preventDefault();}\n"
-"});\n"
-"if(CAN_SSE){\n"
-" var es=new EventSource('/events');\n"
-" es.onopen=function(){setStatus(CAN_FETCH?'Connected':'Connected (read-only mode)');};\n"
-" es.onmessage=function(ev){\n"
-"  try{render(JSON.parse(ev.data));}\n"
-"  catch(e){setStatus('Invalid state payload');}\n"
-" };\n"
-" es.onerror=function(){setStatus('Disconnected, retrying...');};\n"
-"}else{\n"
-" setStatus('Live updates unsupported: EventSource unavailable');\n"
-"}\n"
-"</script>\n"
-"</body>\n"
-"</html>\n";
+static const char *web_index_html[] =
+{
+"<!doctype html>\n",
+"<html lang='en'>\n",
+"<head>\n",
+"<meta charset='utf-8'>\n",
+"<meta name='viewport' content='width=device-width,initial-scale=1'>\n",
+"<title>Comanche055 DSKY</title>\n",
+"<style>\n",
+"html{height:auto;}\n",
+"body{margin:0;padding:12px;background:#0b0b0b;color:#d4f7d4;font-family:Consolas,'Courier New',monospace;font-size:16px;line-height:1.45;box-sizing:border-box;}\n",
+".app{width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;}\n",
+"h1{margin:0 0 12px;text-align:center;font-size:30px;line-height:1.2;}\n",
+"#status{margin:0 0 12px;text-align:center;color:#9ad09a;font-size:18px;}\n",
+"pre{margin:0;background:#111;border:1px solid #2f2f2f;padding:16px;overflow:auto;font-size:22px;line-height:1.35;}\n",
+".keys{margin:14px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:560px;}\n",
+"button{width:104px;min-height:50px;padding:10px 6px;background:#202020;border:1px solid #3a3a3a;color:#e8ffe8;cursor:pointer;font-family:Consolas,'Courier New',monospace;font-size:18px;}\n",
+"button:active{background:#2a2a2a;}\n",
+".spacer{pointer-events:none;cursor:default;}\n",
+"</style>\n",
+"</head>\n",
+"<body>\n",
+"<div class='app'>\n",
+"<h1>COMANCHE 055 DSKY (Web)</h1>\n",
+"<div id='status'>Connecting...</div>\n",
+"<pre id='screen'>Waiting for state...</pre>\n",
+"<div class='keys' id='keys'></div>\n",
+"</div>\n",
+"<script>\n",
+"var KEY={\n",
+" VERB:17,NOUN:31,PLUS:26,MINUS:27,ENTR:28,CLR:30,KREL:25,RSET:18,PRO:-1,\n",
+" D0:16,D1:1,D2:2,D3:3,D4:4,D5:5,D6:6,D7:7,D8:8,D9:9\n",
+"};\n",
+"var CAN_FETCH=(typeof window.fetch==='function'&&window.JSON&&typeof JSON.stringify==='function');\n",
+"var CAN_SSE=(typeof window.EventSource==='function');\n",
+"var buttons=[\n",
+" ['VERB',KEY.VERB],['NOUN',KEY.NOUN],['ENTR',KEY.ENTR],['CLR',KEY.CLR],['RSET',KEY.RSET],\n",
+" ['+',KEY.PLUS],['-',KEY.MINUS],['PRO',KEY.PRO],['KREL',KEY.KREL],['',null],\n",
+" ['7',KEY.D7],['8',KEY.D8],['9',KEY.D9],['4',KEY.D4],['5',KEY.D5],\n",
+" ['6',KEY.D6],['1',KEY.D1],['2',KEY.D2],['3',KEY.D3],['0',KEY.D0]\n",
+"];\n",
+"function setStatus(t){document.getElementById('status').textContent=t;}\n",
+"function d(n){return (n>=0&&n<=9)?String(n):' ';}\n",
+"function sgn(n){return n>0?'+':(n<0?'-':' ');} \n",
+"var LIGHT_ROWS=[\n",
+" [['uplink_acty','UPLINK ACTY'],['temp','TEMP'],['prog_alarm','PROG']],\n",
+" [['gimbal_lock','GIMBAL LOCK'],['stby','STBY'],['restart','RESTART']],\n",
+" [['no_att','NO ATT'],['key_rel','KEY REL'],['tracker','TRACKER']],\n",
+" [['opr_err','OPR ERR'],['vel','VEL'],['alt','ALT']]\n",
+"];\n",
+"function padRight(s,w){while(s.length<w)s+=' ';return s;}\n",
+"function lightCell(on,label){return '['+(on?'X':' ')+'] '+label;}\n",
+"function lightsBlock(l){\n",
+" var rows=LIGHT_ROWS;\n",
+" var i;\n",
+" var j;\n",
+" var out='LIGHTS:\\n';\n",
+" var colw=18;\n",
+" for(i=0;i<rows.length;i++){\n",
+"  for(j=0;j<rows[i].length;j++){\n",
+"   out+=padRight(lightCell(l[rows[i][j][0]]?1:0,rows[i][j][1]),colw);\n",
+"  }\n",
+"  out+='\\n';\n",
+" }\n",
+" out+=lightCell(l.comp_acty?1:0,'COMP ACTY')+'\\n';\n",
+" return out;\n",
+"}\n",
+"function reg(r){return sgn(r.sign)+d(r.digits[0])+d(r.digits[1])+d(r.digits[2])+d(r.digits[3])+d(r.digits[4]);}\n",
+"function render(st){\n",
+" var out=lightsBlock(st.lights);\n",
+" out+='PROG '+d(st.prog[0])+d(st.prog[1])+'  VERB '+d(st.verb[0])+d(st.verb[1])+'  NOUN '+d(st.noun[0])+d(st.noun[1])+'\\n';\n",
+" out+='R1 '+reg(st.r1)+'\\n';\n",
+" out+='R2 '+reg(st.r2)+'\\n';\n",
+" out+='R3 '+reg(st.r3)+'\\n';\n",
+" document.getElementById('screen').textContent=out;\n",
+"}\n",
+"function sendKey(code){\n",
+" if(!CAN_FETCH){setStatus('Input unsupported: fetch unavailable');return;}\n",
+" fetch('/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({keycode:code})}).catch(function(){});\n",
+"}\n",
+"function keycodeFromEvent(ev){\n",
+" var k='';\n",
+" var code=ev.which||ev.keyCode||0;\n",
+" if(typeof ev.key==='string')k=ev.key;\n",
+" if(k){\n",
+"  if(k==='v'||k==='V')return KEY.VERB;\n",
+"  if(k==='n'||k==='N')return KEY.NOUN;\n",
+"  if(k==='e'||k==='E'||k==='Enter')return KEY.ENTR;\n",
+"  if(k==='c'||k==='C')return KEY.CLR;\n",
+"  if(k==='r'||k==='R')return KEY.RSET;\n",
+"  if(k==='k'||k==='K')return KEY.KREL;\n",
+"  if(k==='p'||k==='P')return KEY.PRO;\n",
+"  if(k==='+'||k==='=')return KEY.PLUS;\n",
+"  if(k==='-'||k==='_')return KEY.MINUS;\n",
+"  if(k>='0'&&k<='9')return (k==='0')?KEY.D0:(k.charCodeAt(0)-48);\n",
+" }\n",
+" if(code>=48&&code<=57)return (code==48)?KEY.D0:(code-48);\n",
+" if(code>=96&&code<=105)return (code==96)?KEY.D0:(code-96);\n",
+" switch(code){\n",
+"  case 13:return KEY.ENTR;\n",
+"  case 67:return KEY.CLR;\n",
+"  case 69:return KEY.ENTR;\n",
+"  case 75:return KEY.KREL;\n",
+"  case 78:return KEY.NOUN;\n",
+"  case 80:return KEY.PRO;\n",
+"  case 82:return KEY.RSET;\n",
+"  case 86:return KEY.VERB;\n",
+"  case 107:return KEY.PLUS;\n",
+"  case 109:return KEY.MINUS;\n",
+"  case 173:return KEY.MINUS;\n",
+"  case 187:return KEY.PLUS;\n",
+"  case 189:return KEY.MINUS;\n",
+" }\n",
+" return null;\n",
+"}\n",
+"(function(){\n",
+" var root=document.getElementById('keys');\n",
+" for(var i=0;i<buttons.length;i++){\n",
+"  var b=document.createElement('button');\n",
+"  if(buttons[i][1]===null){b.className='spacer';b.textContent=' ';b.tabIndex=-1;}\n",
+"  else{b.textContent=buttons[i][0];(function(code){b.onclick=function(){sendKey(code);};})(buttons[i][1]);}\n",
+"  root.appendChild(b);\n",
+" }\n",
+"})();\n",
+"document.addEventListener('keydown',function(ev){\n",
+" var kc=keycodeFromEvent(ev);\n",
+" if(kc!==null){sendKey(kc);if(ev.preventDefault)ev.preventDefault();}\n",
+"});\n",
+"if(CAN_SSE){\n",
+" var es=new EventSource('/events');\n",
+" es.onopen=function(){setStatus(CAN_FETCH?'Connected':'Connected (read-only mode)');};\n",
+" es.onmessage=function(ev){\n",
+"  try{render(JSON.parse(ev.data));}\n",
+"  catch(e){setStatus('Invalid state payload');}\n",
+" };\n",
+" es.onerror=function(){setStatus('Disconnected, retrying...');};\n",
+"}else{\n",
+" setStatus('Live updates unsupported: EventSource unavailable');\n",
+"}\n",
+"</script>\n",
+"</body>\n",
+"</html>\n",
+NULL
+};
 
 static int web_is_space(char ch)
 {
@@ -573,6 +576,50 @@ static int web_queue_response(web_client_t *c, int status,
     return 0;
 }
 
+static int web_text_lines_len(const char *const *lines)
+{
+    int total;
+    int i;
+
+    total = 0;
+    for (i = 0; lines[i] != NULL; i++) {
+        total += (int)strlen(lines[i]);
+    }
+    return total;
+}
+
+static int web_queue_response_lines(web_client_t *c, int status,
+                                    const char *content_type,
+                                    const char *const *lines)
+{
+    char header[256];
+    int body_len;
+    int header_len;
+    int i;
+    int line_len;
+
+    body_len = web_text_lines_len(lines);
+    header_len = sprintf(
+        header,
+        "HTTP/1.1 %d %s\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "Cache-Control: no-cache\r\n"
+        "\r\n",
+        status, web_status_text(status), content_type, body_len);
+    if (header_len < 0 || header_len >= (int)sizeof(header)) return -1;
+    if (web_queue_bytes(c, header, header_len) != 0) return -1;
+
+    for (i = 0; lines[i] != NULL; i++) {
+        line_len = (int)strlen(lines[i]);
+        if (web_queue_bytes(c, lines[i], line_len) != 0) return -1;
+    }
+
+    c->close_after_tx = 1;
+    return 0;
+}
+
 static int web_queue_json_error(web_client_t *c, int status, const char *code)
 {
     char body[96];
@@ -748,7 +795,8 @@ static int web_handle_request(web_client_t *c, const web_request_t *req)
         if (req->method != WEB_METHOD_GET) {
             return web_queue_json_error(c, 405, "method_not_allowed");
         }
-        return web_queue_response(c, 200, "text/html; charset=utf-8", web_index_html);
+        return web_queue_response_lines(c, 200, "text/html; charset=utf-8",
+                                        web_index_html);
     }
 
     if (strcmp(req->path, "/events") == 0) {
@@ -993,7 +1041,7 @@ static void web_init_server(void)
     int open_cmd_len;
 
     /* Keep a hard bound: root page + response headers must fit TX buffer. */
-    html_len = (int)strlen(web_index_html);
+    html_len = web_text_lines_len(web_index_html);
     if (html_len + 256 > WEB_TX_BUF) {
         fprintf(stderr, "Web backend init failed: WEB_TX_BUF too small for index HTML\n");
         exit(1);
