@@ -75,7 +75,7 @@ Keyboard mapping is shown on the DSKY display:
 | `K` | KEY REL |
 | `Q` | Quit |
 
-Example: type `V 3 5 E` for lamp test, `V 1 6 E N 3 6 E` for mission clock.
+*Example:* type `V 3 5 E` for lamp test, `V 1 6 E N 3 6 E` for mission clock.
 
 ## Screenshots
 
