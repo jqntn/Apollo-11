@@ -42,20 +42,22 @@ Source is in `Comanche055-C89/`.
 ### CMake
 
 ```cmd
-> cmake -B build
-> cmake --build build
+cmake -B build
+```
+```cmd
+cmake --build build
 ```
 
 ## Usage
 
 ```cmd
-> ./comanche055
+./comanche055
 ```
 
 Or skip the menu with a display mode argument:
 
 ```cmd
-> ./comanche055 <console|gui|web>
+./comanche055 <console|gui|web>
 ```
 
 Keyboard mapping is shown on the DSKY display:
