@@ -26,7 +26,7 @@ Frontend availability by platform:
 
 - **P00** — CMC Idling
 - **V82 / R30** — Orbital parameters (apogee, perigee, TFF)
-- **V16N36** — Mission clock
+- **V16 N36** — Mission clock
 - **V35** — Lamp test
 - **V36** — Fresh start
 - **V37** — Program select
