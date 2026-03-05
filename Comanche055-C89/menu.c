@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "menu.h"
 #include "dsky.h"
+#include "hal.h"
 #include "terminal.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN

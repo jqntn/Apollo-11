@@ -2,9 +2,9 @@
  * dsky.h -- DSKY display abstraction and console backend.
  *
  * Defines the DSKY display state (lights, digits, registers),
- * key codes matching AGC channel 15 encoding, the platform HAL
- * for keyboard input, and the console backend that renders the
- * DSKY as ASCII art via ANSI terminal escape codes.
+ * key codes matching AGC channel 15 encoding, and the console
+ * backend that renders the DSKY as ASCII art via ANSI terminal
+ * escape codes.
  *
  * Maps to T4RUPT_PROGRAM.agc (display scan) and
  * KEYRUPT_UPRUPT.agc (keyboard input).
@@ -85,17 +85,6 @@ void dsky_poll_input(void);
 void dsky_submit_key(int keycode);
 void dsky_t4rupt(void);
 void dsky_set_comp_acty(int on);
-
-/* ----------------------------------------------------------------
- * Platform HAL
- * ---------------------------------------------------------------- */
-
-int hal_kbhit(void);
-int hal_getch(void);
-void hal_term_init(void);
-void hal_term_cleanup(void);
-void hal_sleep_ms(int ms);
-long hal_time_ms(void);
 
 extern dsky_backend_t dsky_console_backend;
 

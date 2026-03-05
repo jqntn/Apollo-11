@@ -6,6 +6,7 @@ add_executable(comanche055
     main.c
     args.c
     menu.c
+    hal.c
     terminal.c
     agc_math.c
     agc_cpu.c

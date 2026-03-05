@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "args.h"
 #include "menu.h"
-#include "dsky.h"
+#include "hal.h"
 #include "agc_cpu.h"
 #include "executive.h"
 #include "timer.h"
