@@ -5,7 +5,7 @@
  */
 
 /* Keep GNU libc from hiding POSIX APIs used below in strict C89 mode. */
-#if defined(__linux__) || defined(__unix__) || defined(__posix__)
+#ifndef _WIN32
 #define _POSIX_C_SOURCE 199309L
 #endif
 

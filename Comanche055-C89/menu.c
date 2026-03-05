@@ -13,13 +13,13 @@
 #include <stdio.h>
 #include "menu.h"
 #include "dsky.h"
+#include "dsky_web.h"
 #include "hal.h"
 #include "terminal.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "dsky_gui.h"
-#include "dsky_web.h"
 #endif
 
 /* ----------------------------------------------------------------
@@ -170,7 +170,9 @@ dsky_backend_t *menu_select_backend(void)
 #else
     options[0].label = "Console   (ANSI terminal)";
     options[0].backend = &dsky_console_backend;
-    count = 1;
+    options[1].label = "Web       (HTTP/SSE)";
+    options[1].backend = &dsky_web_backend;
+    count = 2;
 #endif
 
     selected = 0;

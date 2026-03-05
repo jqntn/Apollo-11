@@ -2,8 +2,7 @@
  * dsky_web.c -- Minimal HTTP/SSE web backend for DSKY.
  *
  * Serves a single-page app with live DSKY state via Server-Sent
- * Events and accepts key input via POST /key.  Windows only
- * (non-blocking Winsock).  Non-Windows builds compile to a stub.
+ * Events and accepts key input via POST /key.
  *
  * Comanche055 (Apollo 11 CM) ANSI C89 port.
  */
@@ -15,17 +14,27 @@
 #endif
 
 #include "dsky_web.h"
+#include "dsky.h"
+#include "hal.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
-
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "dsky.h"
+#else
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
 
 #define WEB_PORT                    8080
 #define WEB_MAX_CLIENTS             16
@@ -38,15 +47,25 @@
 #define WEB_HEADER_LINE_BUF         256
 #define WEB_MAX_ACCEPTS_PER_TICK    4
 #define WEB_STALL_TICKS_LIMIT       100
-#define WEB_HEARTBEAT_TICKS         1500   /* 15s at 100Hz */
+#define WEB_HEARTBEAT_TICKS         1000   /* 10s at 100Hz */
 #define WEB_KEY_QUEUE_CAP           64
 
 #define WEB_METHOD_OTHER            0
 #define WEB_METHOD_GET              1
 #define WEB_METHOD_POST             2
 
+#ifdef _WIN32
+typedef SOCKET web_socket_t;
+#define WEB_INVALID_SOCKET INVALID_SOCKET
+typedef int web_socklen_t;
+#else
+typedef int web_socket_t;
+#define WEB_INVALID_SOCKET (-1)
+typedef socklen_t web_socklen_t;
+#endif
+
 typedef struct {
-    SOCKET sock;
+    web_socket_t sock;
     int active;
     int is_sse;
     int close_after_tx;
@@ -70,7 +89,7 @@ typedef struct {
     char body[WEB_MAX_BODY + 1];
 } web_request_t;
 
-static SOCKET web_listen_sock = INVALID_SOCKET;
+static web_socket_t web_listen_sock = WEB_INVALID_SOCKET;
 static web_client_t web_clients[WEB_MAX_CLIENTS];
 static int web_running = 0;
 static dsky_display_t web_prev_display;
@@ -267,24 +286,87 @@ static const char *web_status_text(int status)
     }
 }
 
-static int web_set_nonblocking(SOCKET sock)
+#ifdef _WIN32
+
+static int web_net_init(void)
+{
+    WSADATA wsa_data;
+    return WSAStartup(MAKEWORD(2, 2), &wsa_data);
+}
+
+static void web_net_cleanup(void)
+{
+    WSACleanup();
+}
+
+static int web_last_error(void)
+{
+    return WSAGetLastError();
+}
+
+static int web_would_block(int err)
+{
+    return (err == WSAEWOULDBLOCK);
+}
+
+static int web_set_nonblocking(web_socket_t sock)
 {
     u_long mode;
     mode = 1;
     return ioctlsocket(sock, FIONBIO, &mode);
 }
 
-static void web_close_socket(SOCKET sock)
+static void web_close_socket(web_socket_t sock)
 {
-    if (sock != INVALID_SOCKET) {
+    if (sock != WEB_INVALID_SOCKET) {
         closesocket(sock);
     }
 }
 
+#else
+
+static int web_net_init(void)
+{
+    signal(SIGPIPE, SIG_IGN);
+    return 0;
+}
+
+static void web_net_cleanup(void)
+{
+}
+
+static int web_last_error(void)
+{
+    return errno;
+}
+
+static int web_would_block(int err)
+{
+    return (err == EWOULDBLOCK || err == EAGAIN);
+}
+
+static int web_set_nonblocking(web_socket_t sock)
+{
+    int flags;
+
+    flags = fcntl(sock, F_GETFL, 0);
+    if (flags < 0) return -1;
+    return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+}
+
+static void web_close_socket(web_socket_t sock)
+{
+    if (sock != WEB_INVALID_SOCKET) {
+        close(sock);
+    }
+}
+
+#endif
+
 static void web_reset_client(web_client_t *c)
 {
     memset(c, 0, sizeof(*c));
-    c->sock = INVALID_SOCKET;
+    c->sock = WEB_INVALID_SOCKET;
 }
 
 static int web_find_free_client_slot(void)
@@ -727,6 +809,19 @@ static int web_process_client_request(web_client_t *c)
     return web_handle_request(c, &req);
 }
 
+static int web_send_data(web_socket_t sock, const char *buf, int len)
+{
+#ifdef _WIN32
+    return send(sock, buf, len, 0);
+#else
+#ifdef MSG_NOSIGNAL
+    return (int)send(sock, buf, (size_t)len, MSG_NOSIGNAL);
+#else
+    return (int)send(sock, buf, (size_t)len, 0);
+#endif
+#endif
+}
+
 static int web_read_client(web_client_t *c)
 {
     int space;
@@ -745,8 +840,8 @@ static int web_read_client(web_client_t *c)
     }
     if (n == 0) return -1;
 
-    err = WSAGetLastError();
-    if (err == WSAEWOULDBLOCK) return 0;
+    err = web_last_error();
+    if (web_would_block(err)) return 0;
     return -1;
 }
 
@@ -771,7 +866,7 @@ static int web_flush_client(web_client_t *c)
         return 0;
     }
 
-    n = send(c->sock, c->tx_buf + c->tx_off, pending, 0);
+    n = web_send_data(c->sock, c->tx_buf + c->tx_off, pending);
     if (n > 0) {
         c->tx_off += n;
         c->stalled_ticks = 0;
@@ -783,8 +878,8 @@ static int web_flush_client(web_client_t *c)
     } else if (n == 0) {
         return -1;
     } else {
-        err = WSAGetLastError();
-        if (err != WSAEWOULDBLOCK) return -1;
+        err = web_last_error();
+        if (!web_would_block(err)) return -1;
         c->stalled_ticks++;
     }
 
@@ -797,7 +892,7 @@ static int web_flush_client(web_client_t *c)
     return 0;
 }
 
-static void web_reject_extra_client(SOCKET sock)
+static void web_reject_extra_client(web_socket_t sock)
 {
     static const char response[] =
         "HTTP/1.1 503 Service Unavailable\r\n"
@@ -806,7 +901,7 @@ static void web_reject_extra_client(SOCKET sock)
         "Connection: close\r\n"
         "\r\n"
         "{\"error\":\"busy\"}";
-    send(sock, response, (int)strlen(response), 0);
+    web_send_data(sock, response, (int)strlen(response));
     web_close_socket(sock);
 }
 
@@ -814,18 +909,18 @@ static void web_accept_connections(void)
 {
     int accepted;
     struct sockaddr_in addr;
-    int addr_len;
-    SOCKET sock;
+    web_socklen_t addr_len;
+    web_socket_t sock;
     int err;
     int slot;
 
     accepted = 0;
     while (accepted < WEB_MAX_ACCEPTS_PER_TICK) {
-        addr_len = (int)sizeof(addr);
+        addr_len = (web_socklen_t)sizeof(addr);
         sock = accept(web_listen_sock, (struct sockaddr *)&addr, &addr_len);
-        if (sock == INVALID_SOCKET) {
-            err = WSAGetLastError();
-            if (err == WSAEWOULDBLOCK) break;
+        if (sock == WEB_INVALID_SOCKET) {
+            err = web_last_error();
+            if (web_would_block(err)) break;
             break;
         }
 
@@ -888,12 +983,14 @@ static void web_maybe_send_heartbeat(void)
 
 static void web_init_server(void)
 {
-    WSADATA wsa_data;
     struct sockaddr_in addr;
     int i;
     int on;
     int html_len;
+    int net_rc;
     int rc;
+    char open_cmd[192];
+    int open_cmd_len;
 
     /* Keep a hard bound: root page + response headers must fit TX buffer. */
     html_len = (int)strlen(web_index_html);
@@ -902,20 +999,25 @@ static void web_init_server(void)
         exit(1);
     }
 
-    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
-        fprintf(stderr, "Web backend init failed: WSAStartup error\n");
+    net_rc = web_net_init();
+    if (net_rc != 0) {
+        fprintf(stderr, "Web backend init failed: network init error %d\n", net_rc);
         exit(1);
     }
 
     web_listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (web_listen_sock == INVALID_SOCKET) {
-        fprintf(stderr, "Web backend init failed: socket error %d\n", WSAGetLastError());
-        WSACleanup();
+    if (web_listen_sock == WEB_INVALID_SOCKET) {
+        fprintf(stderr, "Web backend init failed: socket error %d\n", web_last_error());
+        web_net_cleanup();
         exit(1);
     }
 
     on = 1;
+#ifdef _WIN32
     setsockopt(web_listen_sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&on, sizeof(on));
+#else
+    setsockopt(web_listen_sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+#endif
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -923,26 +1025,26 @@ static void web_init_server(void)
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(web_listen_sock, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-        fprintf(stderr, "Web backend init failed: bind error %d\n", WSAGetLastError());
+        fprintf(stderr, "Web backend init failed: bind error %d\n", web_last_error());
         web_close_socket(web_listen_sock);
-        web_listen_sock = INVALID_SOCKET;
-        WSACleanup();
+        web_listen_sock = WEB_INVALID_SOCKET;
+        web_net_cleanup();
         exit(1);
     }
 
     if (listen(web_listen_sock, WEB_MAX_CLIENTS) != 0) {
-        fprintf(stderr, "Web backend init failed: listen error %d\n", WSAGetLastError());
+        fprintf(stderr, "Web backend init failed: listen error %d\n", web_last_error());
         web_close_socket(web_listen_sock);
-        web_listen_sock = INVALID_SOCKET;
-        WSACleanup();
+        web_listen_sock = WEB_INVALID_SOCKET;
+        web_net_cleanup();
         exit(1);
     }
 
     if (web_set_nonblocking(web_listen_sock) != 0) {
-        fprintf(stderr, "Web backend init failed: nonblocking error %d\n", WSAGetLastError());
+        fprintf(stderr, "Web backend init failed: nonblocking error %d\n", web_last_error());
         web_close_socket(web_listen_sock);
-        web_listen_sock = INVALID_SOCKET;
-        WSACleanup();
+        web_listen_sock = WEB_INVALID_SOCKET;
+        web_net_cleanup();
         exit(1);
     }
 
@@ -957,10 +1059,28 @@ static void web_init_server(void)
     web_prev_display_valid = 0;
     web_running = 1;
 
-    printf("Web backend listening on http://127.0.0.1:%d/\n", WEB_PORT);
+    printf("Web backend listening on all interfaces: http://0.0.0.0:%d/\n", WEB_PORT);
+    printf("Local access URL: http://127.0.0.1:%d/\n", WEB_PORT);
+    printf("Network access URL: http://<this-machine-ip>:%d/\n", WEB_PORT);
 
     printf("Opening browser at http://127.0.0.1:%d/\n", WEB_PORT);
-    rc = system("cmd /c start \"\" \"http://127.0.0.1:8080/\"");
+#ifdef _WIN32
+    open_cmd_len = sprintf(open_cmd,
+                           "cmd /c start \"\" \"http://127.0.0.1:%d/\"",
+                           WEB_PORT);
+#elif defined(__APPLE__)
+    open_cmd_len = sprintf(open_cmd,
+                           "open http://127.0.0.1:%d/ >/dev/null 2>&1 &",
+                           WEB_PORT);
+#else
+    open_cmd_len = sprintf(open_cmd,
+                           "xdg-open http://127.0.0.1:%d/ >/dev/null 2>&1 &",
+                           WEB_PORT);
+#endif
+    if (open_cmd_len < 0 || open_cmd_len >= (int)sizeof(open_cmd))
+        rc = -1;
+    else
+        rc = system(open_cmd);
     if (rc != 0) {
         printf("Could not open browser automatically.\n");
         printf("Open this URL manually: http://127.0.0.1:%d/\n", WEB_PORT);
@@ -1024,14 +1144,14 @@ static void web_cleanup_server(void)
     }
 
     web_close_socket(web_listen_sock);
-    web_listen_sock = INVALID_SOCKET;
-    WSACleanup();
+    web_listen_sock = WEB_INVALID_SOCKET;
+    web_net_cleanup();
     web_running = 0;
 }
 
 static void web_sleep(int ms)
 {
-    Sleep(ms);
+    hal_sleep_ms(ms);
 }
 
 dsky_backend_t dsky_web_backend = {
@@ -1041,28 +1161,3 @@ dsky_backend_t dsky_web_backend = {
     web_cleanup_server,
     web_sleep
 };
-
-#else
-
-/*
- * Non-Windows stub to keep all-platform builds working.
- * The web backend is intentionally Windows-first in this phase.
- */
-
-#include <string.h>
-
-static void web_stub_init(void) { }
-static void web_stub_update(void) { }
-static void web_stub_poll(void) { }
-static void web_stub_cleanup(void) { }
-static void web_stub_sleep(int ms) { (void)ms; }
-
-dsky_backend_t dsky_web_backend = {
-    web_stub_init,
-    web_stub_update,
-    web_stub_poll,
-    web_stub_cleanup,
-    web_stub_sleep
-};
-
-#endif /* _WIN32 */
