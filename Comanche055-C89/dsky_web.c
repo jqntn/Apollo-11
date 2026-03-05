@@ -1116,7 +1116,8 @@ static void web_init_server(void)
     open_cmd_len = sprintf(open_cmd,
                            "cmd /c start \"\" \"http://127.0.0.1:%d/\"",
                            WEB_PORT);
-#elif defined(__APPLE__)
+#else
+#ifdef __APPLE__
     open_cmd_len = sprintf(open_cmd,
                            "open http://127.0.0.1:%d/ >/dev/null 2>&1 &",
                            WEB_PORT);
@@ -1124,6 +1125,7 @@ static void web_init_server(void)
     open_cmd_len = sprintf(open_cmd,
                            "xdg-open http://127.0.0.1:%d/ >/dev/null 2>&1 &",
                            WEB_PORT);
+#endif
 #endif
     if (open_cmd_len < 0 || open_cmd_len >= (int)sizeof(open_cmd))
         rc = -1;
