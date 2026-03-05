@@ -95,6 +95,7 @@ int hal_getch(void);
 void hal_term_init(void);
 void hal_term_cleanup(void);
 void hal_sleep_ms(int ms);
+long hal_time_ms(void);
 
 extern dsky_backend_t dsky_console_backend;
 

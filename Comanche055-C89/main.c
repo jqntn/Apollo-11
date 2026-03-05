@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "args.h"
 #include "menu.h"
+#include "dsky.h"
 #include "agc_cpu.h"
 #include "executive.h"
 #include "timer.h"
@@ -36,13 +37,31 @@ int main(int argc, char *argv[])
 
     backend->init();
 
-    /* Main loop: 100 Hz (10ms per tick) */
+    long last_time = hal_time_ms();
+    int accumulated_ms = 0;
+
+    /* Main loop: 100 Hz */
     while (1) {
-        timer_tick();
-        exec_run();
+        long current_time = hal_time_ms();
+        int elapsed = (int)(current_time - last_time);
+        last_time = current_time;
+
+        accumulated_ms += elapsed;
+        if (accumulated_ms > 500) accumulated_ms = 500; /* Cap catch-up */
+
+        /* Tick AGC simulation */
+        while (accumulated_ms >= 10) {
+            timer_tick();
+            exec_run();
+            accumulated_ms -= 10;
+        }
+
         backend->update();
         backend->poll_input();
-        backend->sleep_ms(10);
+
+        if (accumulated_ms < 10) {
+            backend->sleep_ms(10 - accumulated_ms);
+        }
     }
 
     backend->cleanup();

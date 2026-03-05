@@ -49,6 +49,7 @@ void hal_term_cleanup(void)
 }
 
 void hal_sleep_ms(int ms) { Sleep(ms); }
+long hal_time_ms(void) { return (long)GetTickCount(); }
 
 #else
 
@@ -107,6 +108,13 @@ void hal_sleep_ms(int ms)
     tv.tv_sec = ms / 1000;
     tv.tv_usec = (ms % 1000) * 1000;
     select(0, NULL, NULL, NULL, &tv);
+}
+
+long hal_time_ms(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long)(ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
 }
 
 #endif
