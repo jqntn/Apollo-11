@@ -20,7 +20,7 @@ Frontend availability by platform:
 |---|---|---|---|
 | Console | Yes | Yes | Yes |
 | GUI | Yes | No | No |
-| Web UI | Yes | No | Yes |
+| Web UI | Yes | Yes | Yes |
 
 **Implemented:**
 
