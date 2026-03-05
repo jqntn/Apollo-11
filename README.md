@@ -55,9 +55,7 @@ Source is in `Comanche055-C89/`.
 Or skip the menu with a display mode argument:
 
 ```cmd
-> ./comanche055 console
-> ./comanche055 gui
-> ./comanche055 web
+> ./comanche055 <console|gui|web>
 ```
 
 Keyboard mapping is shown on the DSKY display:
