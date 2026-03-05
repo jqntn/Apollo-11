@@ -88,9 +88,12 @@ Keyboard mapping is shown on the DSKY display:
 
 - [x] Graphical DSKY interface
 - [ ] Full program implementations (P20–P25, P30–P39, P40–P47, P51–P53, P61–P67)
-- [ ] State vector propagation and orbit integration (compute spacecraft position/velocity using AGC state vectors, burns, and gravity models)
-- [ ] IMU simulation (model gyros/accelerometers, platform alignment, and drift so guidance logic receives realistic inertial inputs)
-- [ ] Telemetry downlink display (decode AGC downlink words/frames and present key flight values and alarms in real time)
+- [ ] State vector propagation and orbit integration
+  - [ ] Compute spacecraft position/velocity using AGC state vectors, burns, and gravity models
+- [ ] IMU simulation
+  - [ ] Model gyros/accelerometers, platform alignment, and drift so guidance logic receives realistic inertial inputs
+- [ ] Telemetry downlink display
+  - [ ] Decode AGC downlink words/frames and present key flight values and alarms in real time
 
 ## License
 
