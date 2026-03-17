@@ -14,100 +14,129 @@
 #ifdef _WIN32
 
 #include <conio.h>
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 static DWORD hal_orig_console_mode = 0;
 static int hal_console_mode_saved = 0;
 
-int hal_kbhit(void) { return _kbhit(); }
-int hal_getch(void) { return _getch(); }
-
-void hal_term_init(void)
+int
+hal_kbhit(void)
 {
+  return _kbhit();
+}
+
+int
+hal_getch(void)
+{
+  return _getch();
+}
+
+void
+hal_sleep_ms(int ms)
+{
+  Sleep(ms);
+}
+
+long
+hal_time_ms(void)
+{
+  return (long)GetTickCount64();
+}
+
+void
+hal_term_init(void)
+{
+  HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (h != INVALID_HANDLE_VALUE) {
+    GetConsoleMode(h, &hal_orig_console_mode);
+    hal_console_mode_saved = 1;
+    SetConsoleMode(h,
+                   hal_orig_console_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+  }
+}
+
+void
+hal_term_cleanup(void)
+{
+  if (hal_console_mode_saved) {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (h != INVALID_HANDLE_VALUE) {
-        GetConsoleMode(h, &hal_orig_console_mode);
-        hal_console_mode_saved = 1;
-        SetConsoleMode(h, hal_orig_console_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    }
+    SetConsoleMode(h, hal_orig_console_mode);
+    hal_console_mode_saved = 0;
+  }
 }
-
-void hal_term_cleanup(void)
-{
-    if (hal_console_mode_saved) {
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleMode(h, hal_orig_console_mode);
-        hal_console_mode_saved = 0;
-    }
-}
-
-void hal_sleep_ms(int ms) { Sleep(ms); }
-long hal_time_ms(void) { return (long)GetTickCount(); }
 
 #else
 
-#include <unistd.h>
-#include <termios.h>
 #include <sys/select.h>
+#include <termios.h>
 #include <time.h>
+#include <unistd.h>
 
 static struct termios orig_termios;
 static int term_raw = 0;
 
-void hal_term_init(void)
+int
+hal_kbhit(void)
 {
-    struct termios raw;
-    if (!term_raw) {
-        tcgetattr(STDIN_FILENO, &orig_termios);
-        raw = orig_termios;
-        raw.c_lflag &= ~(ICANON | ECHO);
-        raw.c_cc[VMIN] = 0;
-        raw.c_cc[VTIME] = 0;
-        tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-        term_raw = 1;
-    }
+  struct timeval tv;
+  fd_set fds;
+  tv.tv_sec = 0;
+  tv.tv_usec = 0;
+  FD_ZERO(&fds);
+  FD_SET(STDIN_FILENO, &fds);
+  return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0;
 }
 
-void hal_term_cleanup(void)
+int
+hal_getch(void)
 {
-    if (term_raw) {
-        tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
-        term_raw = 0;
-    }
+  unsigned char c;
+  if (read(STDIN_FILENO, &c, 1) == 1)
+    return (int)c;
+  return -1;
 }
 
-int hal_kbhit(void)
+void
+hal_sleep_ms(int ms)
 {
-    struct timeval tv;
-    fd_set fds;
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-    return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0;
+  struct timeval tv;
+  tv.tv_sec = ms / 1000;
+  tv.tv_usec = (ms % 1000) * 1000;
+  select(0, NULL, NULL, NULL, &tv);
 }
 
-int hal_getch(void)
+long
+hal_time_ms(void)
 {
-    unsigned char c;
-    if (read(STDIN_FILENO, &c, 1) == 1) return (int)c;
-    return -1;
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (long)(ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
 }
 
-void hal_sleep_ms(int ms)
+void
+hal_term_init(void)
 {
-    struct timeval tv;
-    tv.tv_sec = ms / 1000;
-    tv.tv_usec = (ms % 1000) * 1000;
-    select(0, NULL, NULL, NULL, &tv);
+  struct termios raw;
+  if (!term_raw) {
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    raw = orig_termios;
+    raw.c_lflag &= ~(ICANON | ECHO);
+    raw.c_cc[VMIN] = 0;
+    raw.c_cc[VTIME] = 0;
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    term_raw = 1;
+  }
 }
 
-long hal_time_ms(void)
+void
+hal_term_cleanup(void)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (long)(ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+  if (term_raw) {
+    tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
+    term_raw = 0;
+  }
 }
 
 #endif

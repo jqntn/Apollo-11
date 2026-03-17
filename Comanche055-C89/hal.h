@@ -10,11 +10,17 @@
 #ifndef HAL_H
 #define HAL_H
 
-int hal_kbhit(void);
-int hal_getch(void);
-void hal_term_init(void);
-void hal_term_cleanup(void);
-void hal_sleep_ms(int ms);
-long hal_time_ms(void);
+int
+hal_kbhit(void);
+int
+hal_getch(void);
+void
+hal_term_init(void);
+void
+hal_term_cleanup(void);
+void
+hal_sleep_ms(int ms);
+long
+hal_time_ms(void);
 
 #endif /* HAL_H */

@@ -12,18 +12,18 @@
 #ifndef SERVICE_H
 #define SERVICE_H
 
-#include "agc.h"
-
-typedef struct {
-    int noun_num;
-    int num_components;
-    int is_signed;
-    int scale_factor;
+typedef struct
+{
+  int noun_num;
+  int num_components;
+  int is_signed;
+  int scale_factor;
 } noun_table_entry_t;
 
 extern const noun_table_entry_t noun_table[];
 extern const int noun_table_size;
 
-void fresh_start(void);
+void
+fresh_start(void);
 
 #endif /* SERVICE_H */

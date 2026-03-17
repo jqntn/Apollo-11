@@ -12,6 +12,7 @@
 
 #include "dsky_backend.h"
 
-dsky_backend_t *menu_select_backend(void);
+dsky_backend_t*
+menu_select_backend(void);
 
 #endif /* MENU_H */

@@ -9,6 +9,7 @@
 
 #include "dsky_backend.h"
 
-dsky_backend_t *args_parse_backend(int argc, char *argv[]);
+dsky_backend_t*
+args_parse_backend(int argc, char* argv[]);
 
 #endif /* ARGS_H */

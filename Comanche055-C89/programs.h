@@ -12,10 +12,11 @@
 #ifndef PROGRAMS_H
 #define PROGRAMS_H
 
-#include "agc.h"
-
-void program_change(int prognum);
-void program_p00(void);
-void program_stub(int prognum);
+void
+program_change(int prognum);
+void
+program_p00(void);
+void
+program_stub(int prognum);
 
 #endif /* PROGRAMS_H */

@@ -11,9 +11,9 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "agc.h"
-
-void timer_init(void);
-void timer_tick(void);
+void
+timer_init(void);
+void
+timer_tick(void);
 
 #endif /* TIMER_H */
