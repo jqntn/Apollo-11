@@ -34,23 +34,26 @@ agc_sp_sin(agc_word_t angle)
   temk = (int)angle;
 
   /* TS TEMK -- overflow correction */
-  if (temk > 16383)
+  if (temk > 16383) {
     temk = temk - 32767;
-  else if (temk < -16383)
+  } else if (temk < -16383) {
     temk = temk + 32767;
+  }
 
   /* DOUBLE */
   temk = temk * 2;
   if (temk > 16383) {
     temk = temk - 32767;
     temk = 32767 - temk;
-    if (temk > 16383)
+    if (temk > 16383) {
       return (angle >= 0) ? (agc_word_t)16383 : (agc_word_t)-16383;
+    }
   } else if (temk < -16383) {
     temk = temk + 32767;
     temk = -32767 - temk;
-    if (temk < -16383)
+    if (temk < -16383) {
       return (angle < 0) ? (agc_word_t)16383 : (agc_word_t)-16383;
+    }
   }
 
   /* POLLEY: SQ = TEMK^2 >> 14 */
@@ -85,10 +88,11 @@ agc_dp_t
 agc_dp_pack(agc_word_t high, agc_word_t low)
 {
   agc_dp_t result = (agc_dp_t)high * 16384;
-  if (high >= 0)
+  if (high >= 0) {
     result += (agc_dp_t)(low & 0x3FFF);
-  else
+  } else {
     result -= (agc_dp_t)((-low) & 0x3FFF);
+  }
   return result;
 }
 
@@ -122,10 +126,12 @@ agc_dp_multiply(agc_dp_t a, agc_dp_t b)
 {
   agc_int64_t product = (agc_int64_t)a * (agc_int64_t)b;
   product >>= 14;
-  if (product > 0x1FFFFFFF)
+  if (product > 0x1FFFFFFF) {
     product = 0x1FFFFFFF;
-  if (product < -0x1FFFFFFF)
+  }
+  if (product < -0x1FFFFFFF) {
     product = -0x1FFFFFFF;
+  }
   return (agc_dp_t)product;
 }
 
@@ -133,14 +139,17 @@ agc_dp_t
 agc_dp_divide(agc_dp_t a, agc_dp_t b)
 {
   agc_int64_t al, result;
-  if (b == 0)
+  if (b == 0) {
     return (a >= 0) ? 0x1FFFFFFF : -0x1FFFFFFF;
+  }
   al = (agc_int64_t)a << 14;
   result = al / (agc_int64_t)b;
-  if (result > 0x1FFFFFFF)
+  if (result > 0x1FFFFFFF) {
     result = 0x1FFFFFFF;
-  if (result < -0x1FFFFFFF)
+  }
+  if (result < -0x1FFFFFFF) {
     result = -0x1FFFFFFF;
+  }
   return (agc_dp_t)result;
 }
 
@@ -159,10 +168,12 @@ agc_dp_negate(agc_dp_t val)
 int
 agc_dp_sign(agc_dp_t val)
 {
-  if (val > 0)
+  if (val > 0) {
     return 1;
-  if (val < 0)
+  }
+  if (val < 0) {
     return -1;
+  }
   return 0;
 }
 
@@ -173,22 +184,26 @@ agc_dp_sqrt(agc_dp_t val)
   agc_dp_t x, prev;
   int i;
 
-  if (val <= 0)
+  if (val <= 0) {
     return 0;
+  }
 
   x = val >> 1;
-  if (x == 0)
+  if (x == 0) {
     x = 1;
+  }
 
   for (i = 0; i < 20; i++) {
     agc_int64_t div_result;
-    if (x == 0)
+    if (x == 0) {
       break;
+    }
     div_result = ((agc_int64_t)val << 14) / (agc_int64_t)x;
     prev = x;
     x = (agc_dp_t)(((agc_int64_t)x + div_result) >> 1);
-    if (x == prev)
+    if (x == prev) {
       break;
+    }
   }
   return x;
 }
@@ -225,23 +240,27 @@ agc_dp_asin(agc_dp_t val)
   agc_dp_t x, sinx, cosx, dx;
   int i;
 
-  if (val >= (agc_dp_t)16383 * 16384)
+  if (val >= (agc_dp_t)16383 * 16384) {
     return agc_dp_pack(AGC_HALF, 0);
-  if (val <= -(agc_dp_t)16383 * 16384)
+  }
+  if (val <= -(agc_dp_t)16383 * 16384) {
     return agc_dp_pack(AGC_NEG_HALF, 0);
+  }
 
   x = val >> 1;
 
   for (i = 0; i < 15; i++) {
     sinx = agc_dp_sin(x);
     cosx = agc_dp_cos(x);
-    if (cosx == 0)
+    if (cosx == 0) {
       break;
+    }
     dx = agc_dp_divide(val - sinx, cosx);
     dx = dx >> 1;
     x = x + dx;
-    if (agc_dp_abs(dx) < 2)
+    if (agc_dp_abs(dx) < 2) {
       break;
+    }
   }
   return x;
 }
@@ -257,22 +276,25 @@ agc_dp_atan2(agc_dp_t y, agc_dp_t x)
 {
   agc_dp_t mag, ratio, result;
 
-  if (x == 0 && y == 0)
+  if (x == 0 && y == 0) {
     return 0;
+  }
 
   /* asin(y / sqrt(x^2 + y^2)) */
   mag = agc_dp_sqrt(agc_dp_multiply(x, x) + agc_dp_multiply(y, y));
-  if (mag == 0)
+  if (mag == 0) {
     return 0;
+  }
   ratio = agc_dp_divide(y, mag);
   result = agc_dp_asin(ratio);
 
   /* Quadrant correction */
   if (x < 0) {
-    if (y >= 0)
+    if (y >= 0) {
       result = agc_dp_pack((agc_word_t)16383, 0) - result;
-    else
+    } else {
       result = -agc_dp_pack((agc_word_t)16383, 0) - result;
+    }
   }
   return result;
 }
@@ -356,8 +378,9 @@ agc_vec_unit(const agc_word_t* a, agc_word_t* result)
   agc_dp_t mag = agc_vec_mag(a);
   int i;
   if (mag == 0) {
-    for (i = 0; i < 6; i++)
+    for (i = 0; i < 6; i++) {
       result[i] = 0;
+    }
     return 0;
   }
   for (i = 0; i < 3; i++) {
@@ -429,10 +452,11 @@ int
 agc_dp_to_display(agc_dp_t val, int scale_exp)
 {
   long scaled;
-  if (scale_exp >= 0)
+  if (scale_exp >= 0) {
     scaled = (long)val << scale_exp;
-  else
+  } else {
     scaled = (long)val >> (-scale_exp);
+  }
   return (int)(scaled >> 14);
 }
 

@@ -50,23 +50,26 @@ timer_tick(void)
   if (agc_time1 > 16383) {
     agc_time1 = 0;
     agc_time2++;
-    if (agc_time2 > 16383)
+    if (agc_time2 > 16383) {
       agc_time2 = 0;
+    }
   }
 
   /* T3RUPT: drive waitlist every centisecond */
   t3_counter--;
   if (t3_counter <= 0) {
     t3_counter = 1;
-    if (!agc_inhint)
+    if (!agc_inhint) {
       waitlist_t3rupt();
+    }
   }
 
   /* T4RUPT: drive DSKY display scan */
   t4_counter--;
   if (t4_counter <= 0) {
     t4_counter = 2;
-    if (!agc_inhint)
+    if (!agc_inhint) {
       dsky_t4rupt();
+    }
   }
 }

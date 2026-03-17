@@ -30,13 +30,16 @@ static long
 isqrt_long(long val)
 {
   long x, prev;
-  if (val <= 0)
+  if (val <= 0) {
     return 0;
+  }
   x = val;
-  while (x > 32767)
+  while (x > 32767) {
     x >>= 1;
-  if (x < 1)
+  }
+  if (x < 1) {
     x = 1;
+  }
   prev = 0;
   while (x != prev) {
     prev = x;
@@ -105,8 +108,9 @@ nav_compute_orbit(const agc_state_vector_t* sv,
 
   r_mag_sq = rx * rx + ry * ry + rz * rz;
   r_mag = isqrt_long(r_mag_sq);
-  if (r_mag == 0)
+  if (r_mag == 0) {
     r_mag = 1;
+  }
 
   v_sq = vx * vx + vy * vy + vz * vz;
   mu = MU_EARTH_KM3S2;
@@ -134,15 +138,17 @@ nav_compute_orbit(const agc_state_vector_t* sv,
 
   /* Eccentricity: e^2 = 1 - h^2/(mu*a) */
   e_den = (long)((agc_int64_t)mu * a_km);
-  if (e_den == 0)
+  if (e_den == 0) {
     e_den = 1;
+  }
   e_num = (long)((agc_int64_t)e_den - h_sq / (mu > 0 ? mu : 1));
 
   /* Apogee = a*(1+e) - Re, Perigee = a*(1-e) - Re */
   {
     long ae_sq, ae;
-    if (e_num < 0)
+    if (e_num < 0) {
       e_num = 0;
+    }
     ae_sq = (long)(((agc_int64_t)a_km * a_km / e_den) * e_num);
     ae = isqrt_long(ae_sq > 0 ? ae_sq : 0);
 
@@ -150,10 +156,12 @@ nav_compute_orbit(const agc_state_vector_t* sv,
     peri = a_km - ae - EARTH_RADIUS_KM;
   }
 
-  if (apo < 0)
+  if (apo < 0) {
     apo = 0;
-  if (peri < 0)
+  }
+  if (peri < 0) {
     peri = 0;
+  }
 
   *apogee_km = apo;
   *perigee_km = peri;

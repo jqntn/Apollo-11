@@ -53,15 +53,18 @@ menu_read_key(int* selected_index)
 #endif
   *selected_index = -1;
 
-  if (!hal_kbhit())
+  if (!hal_kbhit()) {
     return MENU_KEY_NONE;
+  }
 
   ch = hal_getch();
-  if (ch < 0)
+  if (ch < 0) {
     return MENU_KEY_NONE;
+  }
 
-  if (ch == '\r' || ch == '\n')
+  if (ch == '\r' || ch == '\n') {
     return MENU_KEY_ENTER;
+  }
   if (ch >= '1' && ch <= '9') {
     *selected_index = ch - '1';
     return MENU_KEY_SELECT;
@@ -70,21 +73,26 @@ menu_read_key(int* selected_index)
 #ifdef _WIN32
   if (ch == 0 || ch == 224) {
     next = hal_getch();
-    if (next == 72)
+    if (next == 72) {
       return MENU_KEY_UP;
-    if (next == 80)
+    }
+    if (next == 80) {
       return MENU_KEY_DOWN;
+    }
   }
 #else
   if (ch == 27) {
     next = hal_getch();
-    if (next != '[')
+    if (next != '[') {
       return MENU_KEY_NONE;
+    }
     third = hal_getch();
-    if (third == 'A')
+    if (third == 'A') {
       return MENU_KEY_UP;
-    if (third == 'B')
+    }
+    if (third == 'B') {
       return MENU_KEY_DOWN;
+    }
   }
 #endif
 

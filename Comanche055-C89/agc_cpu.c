@@ -36,20 +36,24 @@ int agc_current_program = 0;
 agc_word_t
 agc_read_erasable(int ebank, int addr)
 {
-  if (ebank < 0 || ebank >= NUM_EBANKS)
+  if (ebank < 0 || ebank >= NUM_EBANKS) {
     return 0;
-  if (addr < 0 || addr >= EBANK_SIZE)
+  }
+  if (addr < 0 || addr >= EBANK_SIZE) {
     return 0;
+  }
   return agc_erasable[ebank][addr];
 }
 
 void
 agc_write_erasable(int ebank, int addr, agc_word_t val)
 {
-  if (ebank < 0 || ebank >= NUM_EBANKS)
+  if (ebank < 0 || ebank >= NUM_EBANKS) {
     return;
-  if (addr < 0 || addr >= EBANK_SIZE)
+  }
+  if (addr < 0 || addr >= EBANK_SIZE) {
     return;
+  }
   agc_erasable[ebank][addr] = val;
 }
 
@@ -60,16 +64,18 @@ agc_write_erasable(int ebank, int addr, agc_word_t val)
 agc_word_t
 agc_read_channel(int chan)
 {
-  if (chan < 0 || chan >= NUM_CHANNELS)
+  if (chan < 0 || chan >= NUM_CHANNELS) {
     return 0;
+  }
   return agc_channels[chan];
 }
 
 void
 agc_write_channel(int chan, agc_word_t val)
 {
-  if (chan < 0 || chan >= NUM_CHANNELS)
+  if (chan < 0 || chan >= NUM_CHANNELS) {
     return;
+  }
   agc_channels[chan] = val;
 }
 
@@ -80,24 +86,27 @@ agc_write_channel(int chan, agc_word_t val)
 void
 agc_flag_set(int flagword, agc_word_t bitmask)
 {
-  if (flagword < 0 || flagword >= NUM_FLAGWORDS)
+  if (flagword < 0 || flagword >= NUM_FLAGWORDS) {
     return;
+  }
   agc_flagwords[flagword] |= bitmask;
 }
 
 void
 agc_flag_clear(int flagword, agc_word_t bitmask)
 {
-  if (flagword < 0 || flagword >= NUM_FLAGWORDS)
+  if (flagword < 0 || flagword >= NUM_FLAGWORDS) {
     return;
+  }
   agc_flagwords[flagword] &= ~bitmask;
 }
 
 int
 agc_flag_test(int flagword, agc_word_t bitmask)
 {
-  if (flagword < 0 || flagword >= NUM_FLAGWORDS)
+  if (flagword < 0 || flagword >= NUM_FLAGWORDS) {
     return 0;
+  }
   return (agc_flagwords[flagword] & bitmask) != 0;
 }
 
@@ -136,10 +145,12 @@ agc_init(void)
 agc_word_t
 agc_overflow_correct(int val)
 {
-  while (val > 16383)
+  while (val > 16383) {
     val -= 32767;
-  while (val < -16383)
+  }
+  while (val < -16383) {
     val += 32767;
+  }
   return (agc_word_t)val;
 }
 
@@ -165,19 +176,23 @@ agc_abs(agc_word_t val)
 agc_word_t
 agc_dabs(agc_word_t val)
 {
-  if (val > 0)
+  if (val > 0) {
     return (agc_word_t)(val - 1);
-  if (val < 0)
+  }
+  if (val < 0) {
     return (agc_word_t)(-(int)val - 1);
+  }
   return 0;
 }
 
 int
 agc_ccs_branch(agc_word_t val)
 {
-  if (val > 0)
+  if (val > 0) {
     return 0;
-  if (val == 0)
+  }
+  if (val == 0) {
     return 1;
+  }
   return 2;
 }

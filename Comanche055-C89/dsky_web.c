@@ -285,8 +285,9 @@ web_is_digit(char ch)
 static int
 web_ascii_tolower(int ch)
 {
-  if (ch >= 'A' && ch <= 'Z')
+  if (ch >= 'A' && ch <= 'Z') {
     return ch - 'A' + 'a';
+  }
   return ch;
 }
 
@@ -294,8 +295,9 @@ static int
 web_starts_with_ci(const char* str, const char* prefix)
 {
   while (*prefix) {
-    if (*str == '\0')
+    if (*str == '\0') {
       return 0;
+    }
     if (web_ascii_tolower((unsigned char)*str) !=
         web_ascii_tolower((unsigned char)*prefix)) {
       return 0;
@@ -402,8 +404,9 @@ web_set_nonblocking(web_socket_t sock)
   int flags;
 
   flags = fcntl(sock, F_GETFL, 0);
-  if (flags < 0)
+  if (flags < 0) {
     return -1;
+  }
   return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 }
 
@@ -429,8 +432,9 @@ web_find_free_client_slot(void)
 {
   int i;
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
-    if (!web_clients[i].active)
+    if (!web_clients[i].active) {
       return i;
+    }
   }
   return -1;
 }
@@ -438,8 +442,9 @@ web_find_free_client_slot(void)
 static void
 web_drop_client(int idx)
 {
-  if (idx < 0 || idx >= WEB_MAX_CLIENTS)
+  if (idx < 0 || idx >= WEB_MAX_CLIENTS) {
     return;
+  }
   if (web_clients[idx].active) {
     web_close_socket(web_clients[idx].sock);
   }
@@ -449,8 +454,9 @@ web_drop_client(int idx)
 static int
 web_key_enqueue(int keycode)
 {
-  if (web_key_count >= WEB_KEY_QUEUE_CAP)
+  if (web_key_count >= WEB_KEY_QUEUE_CAP) {
     return -1;
+  }
   web_key_queue[web_key_tail] = keycode;
   web_key_tail = (web_key_tail + 1) % WEB_KEY_QUEUE_CAP;
   web_key_count++;
@@ -460,8 +466,9 @@ web_key_enqueue(int keycode)
 static int
 web_key_dequeue(int* keycode)
 {
-  if (web_key_count <= 0)
+  if (web_key_count <= 0) {
     return -1;
+  }
   *keycode = web_key_queue[web_key_head];
   web_key_head = (web_key_head + 1) % WEB_KEY_QUEUE_CAP;
   web_key_count--;
@@ -504,23 +511,28 @@ web_parse_nonneg_int(const char* text, int* out)
   const char* p;
 
   p = text;
-  while (web_is_space(*p))
+  while (web_is_space(*p)) {
     p++;
-  if (!web_is_digit(*p))
+  }
+  if (!web_is_digit(*p)) {
     return -1;
+  }
 
   val = 0;
   while (web_is_digit(*p)) {
     val = val * 10 + (long)(*p - '0');
-    if (val > 1000000L)
+    if (val > 1000000L) {
       return -1;
+    }
     p++;
   }
 
-  while (web_is_space(*p))
+  while (web_is_space(*p)) {
     p++;
-  if (*p != '\0')
+  }
+  if (*p != '\0') {
     return -1;
+  }
 
   *out = (int)val;
   return 0;
@@ -534,33 +546,42 @@ web_parse_keycode_json(const char* body, int body_len, int* keycode)
   char* end;
   long val;
 
-  if (body_len < 0 || body_len > WEB_MAX_BODY)
+  if (body_len < 0 || body_len > WEB_MAX_BODY) {
     return -1;
+  }
   memcpy(tmp, body, (size_t)body_len);
   tmp[body_len] = '\0';
 
   p = strstr(tmp, "\"keycode\"");
-  if (p == NULL)
+  if (p == NULL) {
     return -1;
+  }
   p = strchr(p, ':');
-  if (p == NULL)
+  if (p == NULL) {
     return -1;
+  }
   p++;
-  while (web_is_space(*p))
+  while (web_is_space(*p)) {
     p++;
-  if (*p == '\0')
+  }
+  if (*p == '\0') {
     return -1;
+  }
 
   val = strtol(p, &end, 10);
-  if (p == end)
+  if (p == end) {
     return -1;
-  while (web_is_space(*end))
+  }
+  while (web_is_space(*end)) {
     end++;
-  if (*end != '\0' && *end != '}' && *end != ',')
+  }
+  if (*end != '\0' && *end != '}' && *end != ',') {
     return -1;
+  }
 
-  if (val < -32768L || val > 32767L)
+  if (val < -32768L || val > 32767L) {
     return -1;
+  }
   *keycode = (int)val;
   return 0;
 }
@@ -583,8 +604,9 @@ web_find_crlf(const char* buf, int start, int len)
 {
   int i;
   for (i = start; i + 1 < len; i++) {
-    if (buf[i] == '\r' && buf[i + 1] == '\n')
+    if (buf[i] == '\r' && buf[i + 1] == '\n') {
       return i;
+    }
   }
   return -1;
 }
@@ -594,8 +616,9 @@ web_queue_bytes(web_client_t* c, const char* data, int len)
 {
   int pending;
 
-  if (len <= 0)
+  if (len <= 0) {
     return 0;
+  }
 
   if (c->tx_len == c->tx_off) {
     c->tx_len = 0;
@@ -609,8 +632,9 @@ web_queue_bytes(web_client_t* c, const char* data, int len)
     c->tx_off = 0;
   }
 
-  if (c->tx_len + len > WEB_TX_BUF)
+  if (c->tx_len + len > WEB_TX_BUF) {
     return -1;
+  }
   memcpy(c->tx_buf + c->tx_len, data, (size_t)len);
   c->tx_len += len;
   return 0;
@@ -625,12 +649,15 @@ web_client_pending_bytes(const web_client_t* c)
 static int
 web_promote_next_sse_frame(web_client_t* c)
 {
-  if (c->sse_next_len <= 0)
+  if (c->sse_next_len <= 0) {
     return 0;
-  if (c->sse_next_len > WEB_TX_BUF)
+  }
+  if (c->sse_next_len > WEB_TX_BUF) {
     return -1;
-  if (c->tx_len != c->tx_off)
+  }
+  if (c->tx_len != c->tx_off) {
     return 0;
+  }
 
   memcpy(c->tx_buf, c->sse_next_buf, (size_t)c->sse_next_len);
   c->tx_len = c->sse_next_len;
@@ -660,12 +687,15 @@ web_queue_response(web_client_t* c,
                        web_status_text(status),
                        content_type,
                        body_len);
-  if (header_len < 0 || header_len >= (int)sizeof(header))
+  if (header_len < 0 || header_len >= (int)sizeof(header)) {
     return -1;
-  if (web_queue_bytes(c, header, header_len) != 0)
+  }
+  if (web_queue_bytes(c, header, header_len) != 0) {
     return -1;
-  if (web_queue_bytes(c, body, body_len) != 0)
+  }
+  if (web_queue_bytes(c, body, body_len) != 0) {
     return -1;
+  }
   c->close_after_tx = 1;
   return 0;
 }
@@ -707,15 +737,18 @@ web_queue_response_lines(web_client_t* c,
                        web_status_text(status),
                        content_type,
                        body_len);
-  if (header_len < 0 || header_len >= (int)sizeof(header))
+  if (header_len < 0 || header_len >= (int)sizeof(header)) {
     return -1;
-  if (web_queue_bytes(c, header, header_len) != 0)
+  }
+  if (web_queue_bytes(c, header, header_len) != 0) {
     return -1;
+  }
 
   for (i = 0; lines[i] != NULL; i++) {
     line_len = (int)strlen(lines[i]);
-    if (web_queue_bytes(c, lines[i], line_len) != 0)
+    if (web_queue_bytes(c, lines[i], line_len) != 0) {
       return -1;
+    }
   }
 
   c->close_after_tx = 1;
@@ -787,8 +820,9 @@ web_build_state_json(char* out, int cap)
               dsky_display.r3[2],
               dsky_display.r3[3],
               dsky_display.r3[4]);
-  if (n < 0 || n >= (int)sizeof(tmp) || n >= cap)
+  if (n < 0 || n >= (int)sizeof(tmp) || n >= cap) {
     return -1;
+  }
   memcpy(out, tmp, (size_t)n + 1);
   return n;
 }
@@ -800,11 +834,13 @@ web_build_sse_snapshot_frame(char* out, int cap)
   int json_len;
   int total_len;
   json_len = web_build_state_json(json, sizeof(json));
-  if (json_len < 0)
+  if (json_len < 0) {
     return -1;
+  }
   total_len = 6 + json_len + 2;
-  if (total_len >= cap)
+  if (total_len >= cap) {
     return -1;
+  }
   memcpy(out, "data: ", 6);
   memcpy(out + 6, json, (size_t)json_len);
   out[6 + json_len] = '\n';
@@ -818,15 +854,18 @@ web_queue_sse_frame(web_client_t* c, const char* frame, int frame_len)
 {
   int pending;
 
-  if (!c->is_sse)
+  if (!c->is_sse) {
     return 0;
-  if (frame_len <= 0 || frame_len > WEB_SSE_FRAME_BUF)
+  }
+  if (frame_len <= 0 || frame_len > WEB_SSE_FRAME_BUF) {
     return -1;
+  }
 
   pending = c->tx_len - c->tx_off;
   if (pending == 0) {
-    if (web_queue_bytes(c, frame, frame_len) != 0)
+    if (web_queue_bytes(c, frame, frame_len) != 0) {
       return -1;
+    }
   } else {
     memcpy(c->sse_next_buf, frame, (size_t)frame_len);
     c->sse_next_len = frame_len;
@@ -847,14 +886,16 @@ web_try_parse_request(web_client_t* c, web_request_t* req)
 
   header_end = web_find_header_end(c->rx_buf, c->rx_len);
   if (header_end < 0) {
-    if (c->rx_len >= WEB_RX_BUF)
+    if (c->rx_len >= WEB_RX_BUF) {
       return 413;
+    }
     return 0;
   }
 
   line_end = web_find_crlf(c->rx_buf, 0, header_end);
-  if (line_end <= 0 || line_end >= WEB_REQ_LINE_BUF)
+  if (line_end <= 0 || line_end >= WEB_REQ_LINE_BUF) {
     return 400;
+  }
 
   memcpy(line, c->rx_buf, (size_t)line_end);
   line[line_end] = '\0';
@@ -864,10 +905,11 @@ web_try_parse_request(web_client_t* c, web_request_t* req)
   }
 
   req->method = WEB_METHOD_OTHER;
-  if (strcmp(method, "GET") == 0)
+  if (strcmp(method, "GET") == 0) {
     req->method = WEB_METHOD_GET;
-  else if (strcmp(method, "POST") == 0)
+  } else if (strcmp(method, "POST") == 0) {
     req->method = WEB_METHOD_POST;
+  }
   strncpy(req->path, path, WEB_PATH_BUF - 1);
   req->path[WEB_PATH_BUF - 1] = '\0';
 
@@ -875,13 +917,16 @@ web_try_parse_request(web_client_t* c, web_request_t* req)
   pos = line_end + 2;
   while (pos < header_end - 2) {
     next_line = web_find_crlf(c->rx_buf, pos, header_end);
-    if (next_line < 0)
+    if (next_line < 0) {
       return 400;
+    }
     line_len = next_line - pos;
-    if (line_len == 0)
+    if (line_len == 0) {
       break;
-    if (line_len >= WEB_HEADER_LINE_BUF)
+    }
+    if (line_len >= WEB_HEADER_LINE_BUF) {
       return 413;
+    }
 
     memcpy(line, c->rx_buf + pos, (size_t)line_len);
     line[line_len] = '\0';
@@ -895,13 +940,16 @@ web_try_parse_request(web_client_t* c, web_request_t* req)
     pos = next_line + 2;
   }
 
-  if (content_length > WEB_MAX_BODY)
+  if (content_length > WEB_MAX_BODY) {
     return 413;
+  }
   total_len = header_end + content_length;
-  if (total_len > WEB_RX_BUF)
+  if (total_len > WEB_RX_BUF) {
     return 413;
-  if (c->rx_len < total_len)
+  }
+  if (c->rx_len < total_len) {
     return 0;
+  }
 
   req->content_length = content_length;
   if (content_length > 0) {
@@ -937,19 +985,23 @@ web_handle_request(web_client_t* c, const web_request_t* req)
     if (req->method != WEB_METHOD_GET) {
       return web_queue_json_error(c, 405, "method_not_allowed");
     }
-    if (web_queue_bytes(c, sse_headers, (int)strlen(sse_headers)) != 0)
+    if (web_queue_bytes(c, sse_headers, (int)strlen(sse_headers)) != 0) {
       return -1;
-    if (web_queue_bytes(c, sse_retry, (int)strlen(sse_retry)) != 0)
+    }
+    if (web_queue_bytes(c, sse_retry, (int)strlen(sse_retry)) != 0) {
       return -1;
+    }
     c->is_sse = 1;
     c->close_after_tx = 0;
     c->stalled_ticks = 0;
 
     frame_len = web_build_sse_snapshot_frame(frame, sizeof(frame));
-    if (frame_len < 0)
+    if (frame_len < 0) {
       return -1;
-    if (web_queue_sse_frame(c, frame, frame_len) != 0)
+    }
+    if (web_queue_sse_frame(c, frame, frame_len) != 0) {
       return -1;
+    }
     return 0;
   }
 
@@ -978,14 +1030,17 @@ web_process_client_request(web_client_t* c)
   web_request_t req;
   int parse_result;
 
-  if (c->is_sse)
+  if (c->is_sse) {
     return 0;
-  if (c->rx_len <= 0)
+  }
+  if (c->rx_len <= 0) {
     return 0;
+  }
 
   parse_result = web_try_parse_request(c, &req);
-  if (parse_result == 0)
+  if (parse_result == 0) {
     return 0;
+  }
   if (parse_result == 413) {
     c->rx_len = 0;
     return web_queue_json_error(c, 413, "too_large");
@@ -1020,24 +1075,28 @@ web_read_client(web_client_t* c)
   int n;
   int err;
 
-  if (!c->active || c->is_sse)
+  if (!c->active || c->is_sse) {
     return 0;
+  }
 
   space = WEB_RX_BUF - c->rx_len;
-  if (space <= 0)
+  if (space <= 0) {
     return -1;
+  }
 
   n = recv(c->sock, c->rx_buf + c->rx_len, space, 0);
   if (n > 0) {
     c->rx_len += n;
     return 0;
   }
-  if (n == 0)
+  if (n == 0) {
     return -1;
+  }
 
   err = web_last_error();
-  if (web_would_block(err))
+  if (web_would_block(err)) {
     return 0;
+  }
   return -1;
 }
 
@@ -1048,21 +1107,24 @@ web_flush_client(web_client_t* c)
   int n;
   int err;
 
-  if (!c->active)
+  if (!c->active) {
     return 0;
+  }
 
   if (c->tx_len == c->tx_off) {
     c->tx_len = 0;
     c->tx_off = 0;
-    if (web_promote_next_sse_frame(c) != 0)
+    if (web_promote_next_sse_frame(c) != 0) {
       return -1;
+    }
   }
 
   pending = c->tx_len - c->tx_off;
   if (pending <= 0) {
     c->stalled_ticks = 0;
-    if (c->close_after_tx)
+    if (c->close_after_tx) {
       return -1;
+    }
     return 0;
   }
 
@@ -1073,15 +1135,17 @@ web_flush_client(web_client_t* c)
     if (c->tx_off == c->tx_len) {
       c->tx_off = 0;
       c->tx_len = 0;
-      if (web_promote_next_sse_frame(c) != 0)
+      if (web_promote_next_sse_frame(c) != 0) {
         return -1;
+      }
     }
   } else if (n == 0) {
     return -1;
   } else {
     err = web_last_error();
-    if (!web_would_block(err))
+    if (!web_would_block(err)) {
       return -1;
+    }
     c->stalled_ticks++;
   }
 
@@ -1124,8 +1188,9 @@ web_accept_connections(void)
     sock = accept(web_listen_sock, (struct sockaddr*)&addr, &addr_len);
     if (sock == WEB_INVALID_SOCKET) {
       err = web_last_error();
-      if (web_would_block(err))
+      if (web_would_block(err)) {
         break;
+      }
       break;
     }
 
@@ -1155,8 +1220,9 @@ web_broadcast_snapshot(void)
   int i;
 
   frame_len = web_build_sse_snapshot_frame(frame, sizeof(frame));
-  if (frame_len < 0)
+  if (frame_len < 0) {
     return;
+  }
 
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
     if (web_clients[i].active && web_clients[i].is_sse) {
@@ -1174,8 +1240,9 @@ web_maybe_send_heartbeat(void)
   static const char heartbeat[] = ": keepalive\n\n";
 
   web_heartbeat_counter++;
-  if (web_heartbeat_counter < WEB_HEARTBEAT_TICKS)
+  if (web_heartbeat_counter < WEB_HEARTBEAT_TICKS) {
     return;
+  }
   web_heartbeat_counter = 0;
 
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
@@ -1294,10 +1361,11 @@ web_init_server(void)
     open_cmd, "xdg-open http://127.0.0.1:%d/ >/dev/null 2>&1 &", WEB_PORT);
 #endif
 #endif
-  if (open_cmd_len < 0 || open_cmd_len >= (int)sizeof(open_cmd))
+  if (open_cmd_len < 0 || open_cmd_len >= (int)sizeof(open_cmd)) {
     rc = -1;
-  else
+  } else {
     rc = system(open_cmd);
+  }
   if (rc != 0) {
     printf("Could not open browser automatically.\n");
     printf("Open this URL manually: http://127.0.0.1:%d/\n", WEB_PORT);
@@ -1309,20 +1377,23 @@ web_update_server(void)
 {
   int i;
 
-  if (!web_running)
+  if (!web_running) {
     return;
+  }
 
   web_accept_connections();
 
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
-    if (!web_clients[i].active)
+    if (!web_clients[i].active) {
       continue;
+    }
     if (web_read_client(&web_clients[i]) != 0) {
       web_drop_client(i);
       continue;
     }
-    if (!web_clients[i].active)
+    if (!web_clients[i].active) {
       continue;
+    }
     if (web_process_client_request(&web_clients[i]) != 0) {
       web_drop_client(i);
     }
@@ -1338,8 +1409,9 @@ web_update_server(void)
   web_maybe_send_heartbeat();
 
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
-    if (!web_clients[i].active)
+    if (!web_clients[i].active) {
       continue;
+    }
     if (web_flush_client(&web_clients[i]) != 0) {
       web_drop_client(i);
     }
@@ -1359,8 +1431,9 @@ static void
 web_cleanup_server(void)
 {
   int i;
-  if (!web_running)
+  if (!web_running) {
     return;
+  }
 
   for (i = 0; i < WEB_MAX_CLIENTS; i++) {
     if (web_clients[i].active) {

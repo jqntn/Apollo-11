@@ -61,18 +61,21 @@ dsky_init(void)
 static char
 digit_char(int d)
 {
-  if (d < 0 || d > 9)
+  if (d < 0 || d > 9) {
     return ' ';
+  }
   return (char)('0' + d);
 }
 
 static const char*
 sign_str(int s)
 {
-  if (s > 0)
+  if (s > 0) {
     return "+";
-  if (s < 0)
+  }
+  if (s < 0) {
     return "-";
+  }
   return " ";
 }
 
@@ -87,8 +90,9 @@ light_str(char* buf, int on, const char* name)
       buf[1 + len] = name[len];
       len++;
     }
-    for (i = len; i < 7; i++)
+    for (i = len; i < 7; i++) {
       buf[1 + i] = ' ';
+    }
     buf[8] = ']';
     buf[9] = '\0';
   } else {
@@ -256,10 +260,11 @@ dsky_t4rupt(void)
 void
 dsky_set_comp_acty(int on)
 {
-  if (on)
+  if (on) {
     agc_channels[CHAN_DSALMOUT] |= BIT1;
-  else
+  } else {
     agc_channels[CHAN_DSALMOUT] &= ~BIT1;
+  }
   dsky_display.light_comp_acty = on;
 }
 
@@ -284,8 +289,9 @@ void
 dsky_poll_input(void)
 {
   int ch, keycode;
-  if (!hal_kbhit())
+  if (!hal_kbhit()) {
     return;
+  }
 
   ch = hal_getch();
   keycode = -2;
@@ -371,8 +377,9 @@ dsky_poll_input(void)
       break;
   }
 
-  if (keycode != -2)
+  if (keycode != -2) {
     dsky_submit_key(keycode);
+  }
 }
 
 /* ----------------------------------------------------------------

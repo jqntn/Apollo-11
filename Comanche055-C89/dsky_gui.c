@@ -273,30 +273,34 @@ paint_dc(HDC dc)
   dx = S(70);
   dy = S(252);
   draw_sign(dc, dx, dy, dsky_display.r1_sign);
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 5; i++) {
     draw_seg(dc, dx + g_dig_sp + i * g_dig_sp, dy, dsky_display.r1[i]);
+  }
 
   /* R2 */
   draw_label(dc, S(25), S(298), "R2");
   dx = S(70);
   dy = S(298);
   draw_sign(dc, dx, dy, dsky_display.r2_sign);
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 5; i++) {
     draw_seg(dc, dx + g_dig_sp + i * g_dig_sp, dy, dsky_display.r2[i]);
+  }
 
   /* R3 */
   draw_label(dc, S(25), S(344), "R3");
   dx = S(70);
   dy = S(344);
   draw_sign(dc, dx, dy, dsky_display.r3_sign);
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 5; i++) {
     draw_seg(dc, dx + g_dig_sp + i * g_dig_sp, dy, dsky_display.r3[i]);
+  }
 
   frect(dc, S(15), S(420), S(368), S(2), COL_SEP);
 
   /* Keypad */
-  for (i = 0; i < NBTN; i++)
+  for (i = 0; i < NBTN; i++) {
     draw_btn(dc, &sbtns[i], i == g_pressed_btn);
+  }
 }
 
 static int
@@ -305,8 +309,9 @@ hit_btn(int mx, int my)
   int i;
   for (i = 0; i < NBTN; i++) {
     if (mx >= sbtns[i].x && mx < sbtns[i].x + sbtns[i].w && my >= sbtns[i].y &&
-        my < sbtns[i].y + sbtns[i].h)
+        my < sbtns[i].y + sbtns[i].h) {
       return i;
+    }
   }
   return -1;
 }
@@ -406,8 +411,9 @@ wndproc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
       }
       kc = map_char(ch);
-      if (kc >= 0)
+      if (kc >= 0) {
         send_key(kc);
+      }
       return 0;
     }
     case WM_LBUTTONDOWN: {

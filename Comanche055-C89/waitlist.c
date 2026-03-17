@@ -44,10 +44,12 @@ int
 waitlist_add(int dt_centisecs, agc_taskfunc_t task)
 {
   int i;
-  if (dt_centisecs <= 0)
+  if (dt_centisecs <= 0) {
     dt_centisecs = 1;
-  if (task == NULL)
+  }
+  if (task == NULL) {
     return -1;
+  }
 
   for (i = 0; i < NUM_WAITLIST_TASKS; i++) {
     if (agc_waitlist[i].task == NULL) {
@@ -92,11 +94,13 @@ int
 waitlist_longcall(int dt_centisecs, agc_taskfunc_t task)
 {
   int slot;
-  if (dt_centisecs <= 16383)
+  if (dt_centisecs <= 16383) {
     return waitlist_add(dt_centisecs, task);
+  }
 
-  if (longcall_active)
+  if (longcall_active) {
     return -1;
+  }
 
   slot = waitlist_add(16383, longcyl);
   if (slot >= 0) {

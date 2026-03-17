@@ -184,8 +184,9 @@ blank_register(int reg)
       return;
   }
   *sign = 0;
-  for (i = 0; i < 5; i++)
+  for (i = 0; i < 5; i++) {
     digits[i] = -1;
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -204,8 +205,9 @@ inbuf_to_int(void)
 {
   int val = 0;
   int i;
-  for (i = 0; i < pinball_incount; i++)
+  for (i = 0; i < pinball_incount; i++) {
     val = val * 10 + pinball_inbuf[i];
+  }
   return val;
 }
 
@@ -235,8 +237,9 @@ noun_get_value(int noun, int component)
       return 0;
 
     case 9: /* Alarm codes */
-      if (component == 1)
+      if (component == 1) {
         return agc_alarm_code;
+      }
       return 0;
 
     case 43: /* Latitude, longitude, altitude (stub) */
@@ -320,10 +323,12 @@ static void
 verb_display_octal(void)
 {
   int n = pinball_noun;
-  if (pinball_verb >= 1)
+  if (pinball_verb >= 1) {
     pinball_display_octal(1, noun_get_value(n, 1));
-  if (pinball_verb >= 4)
+  }
+  if (pinball_verb >= 4) {
     pinball_display_octal(2, noun_get_value(n, 2));
+  }
 }
 
 static void
@@ -334,8 +339,9 @@ verb_display_decimal(void)
     pinball_display_val(1, noun_get_value(n, 1), 1);
     pinball_display_val(2, noun_get_value(n, 2), 1);
   }
-  if (pinball_verb == 6)
+  if (pinball_verb == 6) {
     pinball_display_val(3, noun_get_value(n, 3), 1);
+  }
 }
 
 static void
@@ -370,10 +376,12 @@ verb_load_component(void)
   /* V21->R1, V22->R2, V23->R3 */
   pinball_mode = PINBALL_MODE_DATA;
   pinball_data_reg = pinball_verb - 20;
-  if (pinball_data_reg < 1)
+  if (pinball_data_reg < 1) {
     pinball_data_reg = 1;
-  if (pinball_data_reg > 3)
+  }
+  if (pinball_data_reg > 3) {
     pinball_data_reg = 3;
+  }
   clear_inbuf();
   blank_register(pinball_data_reg);
 }
@@ -492,8 +500,9 @@ pinball_keypress(int keycode)
 
   if (keycode == DSKY_KEY_CLR) {
     clear_inbuf();
-    if (pinball_mode == PINBALL_MODE_DATA)
+    if (pinball_mode == PINBALL_MODE_DATA) {
       blank_register(pinball_data_reg ? pinball_data_reg : 1);
+    }
     return;
   }
 
@@ -552,8 +561,9 @@ pinball_keypress(int keycode)
             sign = dsky_display.r3_sign;
             break;
         }
-        if (sign < 0)
+        if (sign < 0) {
           val = -val;
+        }
         pinball_display_val(pinball_data_reg, val, 1);
         /* V24/V25: advance to next register */
         if (pinball_verb == 24 && pinball_data_reg == 1) {
@@ -605,26 +615,29 @@ pinball_keypress(int keycode)
   /* Digit keys (0-9) */
   if ((keycode >= 0 && keycode <= 011) || keycode == DSKY_KEY_0) {
     int digit;
-    if (keycode == DSKY_KEY_0)
+    if (keycode == DSKY_KEY_0) {
       digit = 0;
-    else
+    } else {
       digit = keycode;
+    }
 
     if (pinball_mode == PINBALL_MODE_VERB) {
       if (pinball_incount < 2) {
         pinball_inbuf[pinball_incount++] = digit;
-        if (pinball_incount == 1)
+        if (pinball_incount == 1) {
           dsky_display.verb[0] = digit;
-        else
+        } else {
           dsky_display.verb[1] = digit;
+        }
       }
     } else if (pinball_mode == PINBALL_MODE_NOUN) {
       if (pinball_incount < 2) {
         pinball_inbuf[pinball_incount++] = digit;
-        if (pinball_incount == 1)
+        if (pinball_incount == 1) {
           dsky_display.noun[0] = digit;
-        else
+        } else {
           dsky_display.noun[1] = digit;
+        }
       }
     } else if (pinball_mode == PINBALL_MODE_DATA) {
       if (pinball_incount < 5) {
@@ -644,8 +657,9 @@ pinball_keypress(int keycode)
             digits = dsky_display.r3;
             break;
         }
-        if (digits != NULL)
+        if (digits != NULL) {
           digits[pinball_incount] = digit;
+        }
         pinball_incount++;
       }
     }

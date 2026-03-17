@@ -93,8 +93,9 @@ int
 hal_getch(void)
 {
   unsigned char c;
-  if (read(STDIN_FILENO, &c, 1) == 1)
+  if (read(STDIN_FILENO, &c, 1) == 1) {
     return (int)c;
+  }
   return -1;
 }
 
